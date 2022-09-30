@@ -28,8 +28,6 @@ void Line(const std::string &opt){
 }
 
 void Visit(const koopa_raw_program_t &program) {
-  // 执行一些其他的必要操作
-  // ...
   // 访问所有全局变量
   Visit(program.values);
   Line(".text");
@@ -65,8 +63,6 @@ void Visit(const koopa_raw_slice_t &slice) {
 
 // 访问函数
 void Visit(const koopa_raw_function_t &func) {
-  // 执行一些其他的必要操作
-  // ...
   // 访问所有基本块
   //                    删符号
   Line(std::string((func->name) + 1) + ":");
@@ -75,8 +71,6 @@ void Visit(const koopa_raw_function_t &func) {
 
 // 访问基本块
 void Visit(const koopa_raw_basic_block_t &bb) {
-  // 执行一些其他的必要操作
-  // ...
   // 访问所有指令
   Visit(bb->insts);
 }
@@ -94,16 +88,22 @@ void Visit(const koopa_raw_value_t &value) {
       // 访问 integer 指令
       Visit(kind.data.integer);
       break;
+    case KOOPA_RVT_BINARY:
+      Visit(kind.data.binary);
     default:
       // 其他类型暂时遇不到
       assert(false);
   }
 }
 void Visit(const koopa_raw_return_t &ret) {
-    Line("li a0, " + std::to_string(ret.value->kind.data.integer.value));
+    Line("mv a0, " + std::string(ret.value->name));
     Line("ret");
 }
 
 void Visit(const koopa_raw_integer_t &integer){
     std::cout << integer.value << std::endl;
+}
+
+void Visit(const koopa_raw_binary_t &binary){
+    
 }

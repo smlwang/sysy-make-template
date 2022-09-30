@@ -1,14 +1,14 @@
 %code requires {
     #include<memory>
     #include<string>
-    #include"../include/ast.hpp"
+    #include"../include/ast/ast.hpp"
 }
 
 %{
     #include<iostream>
     #include<memory>
     #include<string>
-    #include"../include/ast.hpp"
+    #include"../include/ast/ast.hpp"
     int yylex();
     void yyerror(std::unique_ptr<BaseAST> &ast, const char *s);
     using namespace std;
@@ -62,7 +62,7 @@ Block
 Stmt
     : RETURN Exp ';' {
         auto ast = new StmtAST();
-        ast->number = unique_ptr<BaseAST>($2);
+        ast->exp = unique_ptr<BaseAST>($2);
         $$ = ast;
     }
     ;
@@ -74,7 +74,7 @@ Exp
     }
     ;
 PrimaryExp
-    : "(" Exp ")" {
+    : '(' Exp ')' {
         auto ast = new PrimaryExp1();
         ast->exp = unique_ptr<BaseAST>($2);
         $$ = ast;
@@ -99,17 +99,17 @@ UnaryExp
     }
     ;
 UnaryOp
-    : "+" {
+    : '+' {
         auto ast = new UnaryOpAST();
         ast->unaryOp = *unique_ptr<string>(new string("+")); 
         $$ = ast;
     }
-    | "-" {
+    | '-' {
         auto ast = new UnaryOpAST();
         ast->unaryOp = *unique_ptr<string>(new string("-")); 
         $$ = ast;
     }
-    | "!" {
+    | '!' {
         auto ast = new UnaryOpAST();
         ast->unaryOp = *unique_ptr<string>(new string("!")); 
         $$ = ast;

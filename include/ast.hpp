@@ -72,3 +72,49 @@ class NumberAST : public BaseAST {
             std::cout << number;
         }
 };
+
+class ExpAST : public BaseAST {
+    public:
+        std::unique_ptr<BaseAST> unaryExp;
+        void Dump() const override {
+            unaryExp->Dump();
+        }
+};
+class PrimaryExp1 : public BaseAST {
+    public:// ( Exp )
+        std::unique_ptr<BaseAST> exp;
+        void Dump() const override {
+            std::cout << "(";
+            exp->Dump();
+            std::cout << ")";
+        }
+};
+class PrimaryExp2 : public BaseAST {
+    public: // Number
+        std::unique_ptr<BaseAST> number;
+        void Dump() const override {
+            number->Dump();
+        }
+};
+class UnaryExp1 : public BaseAST {
+    public:// PrimaryExp
+        std::unique_ptr<BaseAST> primaryExp;
+        void Dump() const override {
+            primaryExp->Dump();
+        }
+};
+class UnaryExp2 : public BaseAST {
+    public: // UnaryOp UnaryExp
+        std::unique_ptr<BaseAST> unaryOp, unaryExp;
+        void Dump() const override {
+            unaryOp->Dump();
+            unaryExp->Dump();
+        }
+};
+class UnaryOpAST : public BaseAST {
+    public:
+        std::string unaryOp;
+        void Dump() const override {
+            std::cout << unaryOp;
+        }
+};

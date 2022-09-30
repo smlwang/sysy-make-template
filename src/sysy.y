@@ -26,6 +26,7 @@
 %token <int_val> INT_CONST
 
 %type <ast_val> FuncDef FuncType Block Stmt Number
+%type <ast_val> Exp PrimaryExp UnaryOp UnaryExp
 
 %%
 CompUnit
@@ -59,12 +60,60 @@ Block
     }
     ;
 Stmt
-    : RETURN Number ';' {
+    : RETURN Exp ';' {
         auto ast = new StmtAST();
         ast->number = unique_ptr<BaseAST>($2);
         $$ = ast;
     }
     ;
+Exp
+    : UnaryExp {
+        auto ast = new ExpAST();
+        ast->unaryExp = unique_ptr<BaseAST>($1);
+        $$ = ast; 
+    }
+    ;
+PrimaryExp
+    : "(" Exp ")" {
+        auto ast = new PrimaryExp1();
+        ast->exp = unique_ptr<BaseAST>($2);
+        $$ = ast;
+    }
+    | Number {
+        auto ast = new PrimaryExp2();
+        ast->number = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    ;
+UnaryExp
+    : PrimaryExp {
+        auto ast = new UnaryExp1();
+        ast->primaryExp = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    | UnaryOp UnaryExp {
+        auto ast = new UnaryExp2();
+        ast->unaryOp = unique_ptr<BaseAST>($1);
+        ast->unaryExp = unique_ptr<BaseAST>($2);
+        $$ = ast;
+    }
+    ;
+UnaryOp
+    : "+" {
+        auto ast = new UnaryOpAST();
+        ast->unaryOp = *unique_ptr<string>(new string("+")); 
+        $$ = ast;
+    }
+    | "-" {
+        auto ast = new UnaryOpAST();
+        ast->unaryOp = *unique_ptr<string>(new string("-")); 
+        $$ = ast;
+    }
+    | "!" {
+        auto ast = new UnaryOpAST();
+        ast->unaryOp = *unique_ptr<string>(new string("!")); 
+        $$ = ast;
+    }
 Number
     : INT_CONST {
         auto ast = new NumberAST();

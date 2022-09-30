@@ -25,8 +25,7 @@
 %token <str_val> IDENT
 %token <int_val> INT_CONST
 
-%type <ast_val> FuncDef FuncType Block Stmt
-%type <int_val> Number
+%type <ast_val> FuncDef FuncType Block Stmt Number
 
 %%
 CompUnit
@@ -62,13 +61,15 @@ Block
 Stmt
     : RETURN Number ';' {
         auto ast = new StmtAST();
-        ast->number = *unique_ptr<string>(new string(to_string($2)));
+        ast->number = unique_ptr<BaseAST>($2);
         $$ = ast;
     }
     ;
 Number
     : INT_CONST {
-        $$ = $1;
+        auto ast = new NumberAST();
+        ast->number = *unique_ptr<string>(new string(to_string($1)));
+        $$ = ast;
     }
     ;
 %%

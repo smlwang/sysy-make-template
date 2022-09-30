@@ -58,8 +58,17 @@ class BlockAST : public BaseAST {
 };
 class StmtAST : public BaseAST {
     public:
+        std::unique_ptr<BaseAST> number;
+        void Dump() const override {
+            std::cout << "ret ";
+            number->Dump();
+            std::cout << "\n";
+        }
+};
+class NumberAST : public BaseAST {
+    public:
         std::string number;
         void Dump() const override {
-            std::cout << "ret " << number << "\n";
+            std::cout << number;
         }
 };

@@ -5,7 +5,7 @@
 #include<memory>
 #include"../include/koopa.h"
 #include"../include/kvis.hpp"
-#include"../include/ast.hpp"
+#include"../include/ast/ast.hpp"
 #include<string>
 using namespace std;
 
@@ -34,11 +34,16 @@ int main(int argc, char const *argv[])
     unique_ptr<BaseAST> ast;
     auto ret = yyparse(ast);
     assert(!ret);
+    cout << string(mod);
+    freopen(output, "w", stdout);
     stringstream buf;
     streambuf *old = cout.rdbuf(buf.rdbuf()); 
     ast->Dump();
     cout.rdbuf(old);
-    freopen(output, "w", stdout);
+    if(string(mod) == "-koopa"s){
+        cout << buf.str() << endl;
+        return 0;
+    }
     dealIR(buf);
     fclose(stdout);
     return 0;

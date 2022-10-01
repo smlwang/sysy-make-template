@@ -2,6 +2,7 @@
 #include"koopa.h"
 #include<assert.h>
 #include<iostream>
+#include"tool/register.hpp"
 void Line(const std::string&);
 void Visit(const koopa_raw_program_t&);
 void Visit(const koopa_raw_slice_t&);
@@ -28,8 +29,6 @@ void Line(const std::string &opt){
 }
 
 void Visit(const koopa_raw_program_t &program) {
-  // 执行一些其他的必要操作
-  // ...
   // 访问所有全局变量
   Visit(program.values);
   Line(".text");
@@ -65,8 +64,6 @@ void Visit(const koopa_raw_slice_t &slice) {
 
 // 访问函数
 void Visit(const koopa_raw_function_t &func) {
-  // 执行一些其他的必要操作
-  // ...
   // 访问所有基本块
   //                    删符号
   Line(std::string((func->name) + 1) + ":");
@@ -75,8 +72,6 @@ void Visit(const koopa_raw_function_t &func) {
 
 // 访问基本块
 void Visit(const koopa_raw_basic_block_t &bb) {
-  // 执行一些其他的必要操作
-  // ...
   // 访问所有指令
   Visit(bb->insts);
 }
@@ -94,16 +89,60 @@ void Visit(const koopa_raw_value_t &value) {
       // 访问 integer 指令
       Visit(kind.data.integer);
       break;
+      // 访问 二元运算符
+    case KOOPA_RVT_BINARY:
+      Visit(kind.data.binary);
+      break;
     default:
       // 其他类型暂时遇不到
+      // exit(1);
       assert(false);
   }
 }
 void Visit(const koopa_raw_return_t &ret) {
-    Line("li a0, " + std::to_string(ret.value->kind.data.integer.value));
+    Line("mv a0, " + reg.nowT());
     Line("ret");
 }
 
 void Visit(const koopa_raw_integer_t &integer){
-    std::cout << integer.value << std::endl;
+    std::cout << std::to_string(integer.value);
+}
+std::string dealreg(const koopa_raw_value_t& value){
+  const auto &kind = value->kind;
+    switch (kind.tag)
+    {
+    case KOOPA_RVT_INTEGER:
+        int num = kind.data.integer.value;
+        if(!num) return "x0";
+        std::cout << "li " << reg.nextT() << ", " << std::to_string(num) << std::endl;
+        return reg.nowT();
+    }
+    return reg.nowT();
+}
+void Visit(const koopa_raw_binary_t &binary){
+    auto op = binary.op;
+    auto l = binary.lhs;
+    auto r = binary.rhs;
+    std::string left = dealreg(l);
+    std::string right = dealreg(r);
+    std::string cur = reg.nextT(); 
+    switch (op)
+    {
+    case KOOPA_RBO_ADD:
+        std::cout << "add " << cur << ", " << left << ", " << right << std::endl;
+        break;
+    case KOOPA_RBO_SUB:
+        std::cout << "sub " << cur << ", " << left << ", " << right << std::endl;
+        break;
+    case KOOPA_RBO_EQ:
+        std::cout << "xor " << cur << ", " << left << ", " << right << std::endl;
+        std::cout << "seqz " << cur << ", " << cur << std::endl;
+        break;
+    default:
+        break;
+    }
+}
+
+void Visit(const koopa_raw_binary_t &binary){
+    
 }

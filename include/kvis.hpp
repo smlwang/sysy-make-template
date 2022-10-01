@@ -142,7 +142,3 @@ void Visit(const koopa_raw_binary_t &binary){
         break;
     }
 }
-
-void Visit(const koopa_raw_binary_t &binary){
-    
-}

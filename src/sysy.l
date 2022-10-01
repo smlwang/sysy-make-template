@@ -19,7 +19,11 @@ Octal                   0[0-7]*
 Hexadecimal             0[xX][0-9a-fA-F]+
 
 MulOp                   [\*\/%]
-AddOp                   [\+\-]   
+AddOp                   [\+\-]
+RelOp                   <=|>=|<|>
+EqOp                    !=|==
+LAndOp                  &&
+LOrOp                   \|\|    
 %%
 
 
@@ -32,7 +36,14 @@ AddOp                   [\+\-]
 {Decimal}               {yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST;}
 {Octal}                 {yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST;}
 {Hexadecimal}           {yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST;}
+
 {MulOp}                 {yylval.str_val = new string(yytext); return MUL;}
 {AddOp}                 {yylval.str_val = new string(yytext); return ADD;}
+
+{LOrOp}                 {yylval.str_val = new string(yytext); return LOR;}
+{LAndOp}                {yylval.str_val = new string(yytext); return LAND;}
+{EqOp}                  {yylval.str_val = new string(yytext); return EQ;}
+{RelOp}                 {yylval.str_val = new string(yytext); return REL;}
+
 .                       {return yytext[0];}
 %%

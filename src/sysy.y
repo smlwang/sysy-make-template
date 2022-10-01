@@ -22,11 +22,11 @@
     BaseAST *ast_val;
 }
 %token INT RETURN
-%token <str_val> IDENT MUL ADD
+%token <str_val> IDENT MUL ADD EQ REL LAND LOR
 %token <int_val> INT_CONST
 
 %type <ast_val> FuncDef FuncType Block Stmt 
-%type <ast_val> Exp PrimaryExp UnaryExp AddExp MulExp
+%type <ast_val> Exp PrimaryExp UnaryExp AddExp MulExp LOrExp RelExp EqExp LAndExp
 %type <int_val> Number
 %type <str_val> UnaryOp
 
@@ -69,9 +69,9 @@ Stmt
     }
     ;
 Exp
-    : AddExp {
+    : LOrExp {
         auto ast = new ExpAST();
-        ast->addExp = unique_ptr<BaseAST>($1);
+        ast->lOrExp = unique_ptr<BaseAST>($1);
         $$ = ast; 
     }
     ;
@@ -107,6 +107,7 @@ UnaryOp
     | '!' {
         $$ = new string("!");
     }
+    ;
 AddExp
     : MulExp {
         auto ast = new AddExp1();
@@ -140,6 +141,59 @@ Number
         $$ = $1;
     }
     ;
+RelExp
+    : AddExp {
+        auto ast = new RelExp1();
+        ast->addExp = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    | RelExp REL AddExp {
+        auto ast = new RelExp2();
+        ast->relExp = unique_ptr<BaseAST>($1);
+        ast->rel = *unique_ptr<string>($2);
+        ast->addExp = unique_ptr<BaseAST>($3);
+        $$ = ast;
+    }
+    ;
+EqExp
+    : RelExp {
+        auto ast = new EqExp1();
+        ast->relExp = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    | EqExp EQ RelExp {
+        auto ast = new EqExp2();
+        ast->eqExp = unique_ptr<BaseAST>($1);
+        ast->eq = *unique_ptr<string>($2);
+        ast->relExp = unique_ptr<BaseAST>($3);
+        $$ = ast;
+    }
+    ;
+LAndExp
+    : EqExp {
+        auto ast = new LAndExp1();
+        ast->eqExp = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    | LAndExp LAND EqExp {
+        auto ast = new LAndExp2();
+        ast->lAndExp = unique_ptr<BaseAST>($1);
+        ast->eqExp = unique_ptr<BaseAST>($3);
+        $$ = ast;
+    }
+    ;
+LOrExp
+    : LAndExp {
+        auto ast = new LOrExp1();
+        ast->lAndExp = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    | LAndExp LOR LAndExp{
+        auto ast = new LOrExp2();
+        ast->lAndExp1 = unique_ptr<BaseAST>($1);
+        ast->lAndExp2 = unique_ptr<BaseAST>($3);
+        $$ = ast;
+    }
 %%
 void yyerror(unique_ptr<BaseAST> &ast, const char *s){
     cerr << "error: " << s << endl;

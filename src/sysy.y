@@ -22,11 +22,13 @@
     BaseAST *ast_val;
 }
 %token INT RETURN
-%token <str_val> IDENT
+%token <str_val> IDENT MUL ADD
 %token <int_val> INT_CONST
 
-%type <ast_val> FuncDef FuncType Block Stmt Number
-%type <ast_val> Exp PrimaryExp UnaryOp UnaryExp
+%type <ast_val> FuncDef FuncType Block Stmt 
+%type <ast_val> Exp PrimaryExp UnaryExp AddExp MulExp
+%type <int_val> Number
+%type <str_val> UnaryOp
 
 %%
 CompUnit
@@ -67,9 +69,9 @@ Stmt
     }
     ;
 Exp
-    : UnaryExp {
+    : AddExp {
         auto ast = new ExpAST();
-        ast->unaryExp = unique_ptr<BaseAST>($1);
+        ast->addExp = unique_ptr<BaseAST>($1);
         $$ = ast; 
     }
     ;
@@ -81,7 +83,7 @@ PrimaryExp
     }
     | Number {
         auto ast = new PrimaryExp2();
-        ast->number = unique_ptr<BaseAST>($1);
+        ast->number = *unique_ptr<string>(new string(to_string($1)));
         $$ = ast;
     }
     ;
@@ -93,32 +95,49 @@ UnaryExp
     }
     | UnaryOp UnaryExp {
         auto ast = new UnaryExp2();
-        ast->unaryOp = unique_ptr<BaseAST>($1);
+        ast->unaryOp = *unique_ptr<string>($1);
         ast->unaryExp = unique_ptr<BaseAST>($2);
         $$ = ast;
     }
     ;
 UnaryOp
-    : '+' {
-        auto ast = new UnaryOpAST();
-        ast->unaryOp = *unique_ptr<string>(new string("+")); 
-        $$ = ast;
-    }
-    | '-' {
-        auto ast = new UnaryOpAST();
-        ast->unaryOp = *unique_ptr<string>(new string("-")); 
-        $$ = ast;
+    : ADD {
+        $$ = $1;
     }
     | '!' {
-        auto ast = new UnaryOpAST();
-        ast->unaryOp = *unique_ptr<string>(new string("!")); 
+        $$ = new string("!");
+    }
+AddExp
+    : MulExp {
+        auto ast = new AddExp1();
+        ast->mulExp = unique_ptr<BaseAST>($1);
         $$ = ast;
     }
+    | AddExp ADD MulExp {
+        auto ast = new AddExp2();
+        ast->addExp = unique_ptr<BaseAST>($1);
+        ast->add = *unique_ptr<string>($2);
+        ast->mulExp = unique_ptr<BaseAST>($3);
+        $$ = ast;
+    }
+    ;
+MulExp
+    : UnaryExp {
+        auto ast = new MulExp1();
+        ast->unaryExp = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    | MulExp MUL UnaryExp {
+        auto ast = new MulExp2();
+        ast->mulExp = unique_ptr<BaseAST>($1);
+        ast->mul = *unique_ptr<string>($2);
+        ast->unaryExp = unique_ptr<BaseAST>($3);
+        $$ = ast;
+    }
+    ;
 Number
     : INT_CONST {
-        auto ast = new NumberAST();
-        ast->number = *unique_ptr<string>(new string(to_string($1)));
-        $$ = ast;
+        $$ = $1;
     }
     ;
 %%

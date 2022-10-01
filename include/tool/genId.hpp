@@ -16,9 +16,6 @@ public:
         return get();
     }
     //当前计数前置编号
-    const std::string pre() {
-        return prefix + std::to_string(count - 1);
-    }
     ~Idgenerator(){};
     Idgenerator(const std::string &_pre) : prefix(_pre) {
         count = 0;

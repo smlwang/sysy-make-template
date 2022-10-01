@@ -6,12 +6,5 @@ static Idgenerator unaryid("%_unary_tmp_");
 class BaseAST {
     public:
         virtual ~BaseAST() = default;
-        virtual void Dump() const = 0;
-};
-class NumberAST : public BaseAST {
-    public:
-        std::string number;
-        void Dump() const override {
-            std::cout << number;
-        }
+        virtual std::unique_ptr<std::string> Dump() const = 0;
 };

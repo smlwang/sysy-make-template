@@ -1,61 +1,114 @@
 #pragma once
 #include"def.hpp"
 // Stmt        ::= "return" Exp ";";
-// Exp         ::= UnaryExp;
+// Exp         ::= AddExp;
+// AddExp      ::= MulExp | AddExp ("+" | "-") MulExp;
+// MulExp      ::= UnaryExp | MulExp ("*" | "/" | "%") UnaryExp;
 // UnaryExp    ::= PrimaryExp | UnaryOp UnaryExp;
 // PrimaryExp  ::= "(" Exp ")" | Number;
 // UnaryOp     ::= "+" | "-" | "!";
 // Number      ::= INT_CONST;
-
 class ExpAST : public BaseAST {
     public:
-        std::unique_ptr<BaseAST> unaryExp;
-        void Dump() const override {
-            unaryExp->Dump();
+        std::unique_ptr<BaseAST> addExp;
+        std::unique_ptr<std::string> Dump() const override {
+           return addExp->Dump();
         }
 };
 class PrimaryExp1 : public BaseAST {
     public:// ( Exp )
         std::unique_ptr<BaseAST> exp;
-        void Dump() const override {
-            exp->Dump();
+        std::unique_ptr<std::string> Dump() const override {
+           return exp->Dump();
         }
 };
 class PrimaryExp2 : public BaseAST {
     public: // Number
-        std::unique_ptr<BaseAST> number;
-        void Dump() const override {
-            std::cout << unaryid.next() << " = sub "; 
-            number->Dump();
-            std::cout << ", 0" << std::endl;
+        std::string number;
+        std::unique_ptr<std::string> Dump() const override {
+            std::string lef = unaryid.next();
+            std::cout << lef << " = sub " << number << ", 0\n";
+            return std::unique_ptr<std::string>(new std::string(lef));
         }
 };
 class UnaryExp1 : public BaseAST {
     public:// PrimaryExp
         std::unique_ptr<BaseAST> primaryExp;
-        void Dump() const override {
-            primaryExp->Dump();
+        std::unique_ptr<std::string> Dump() const override {
+           return primaryExp->Dump();
         }
 };
 class UnaryExp2 : public BaseAST {
     public: // UnaryOp UnaryExp
-        std::unique_ptr<BaseAST> unaryOp, unaryExp;
-        void Dump() const override {
-            unaryExp->Dump();
-            unaryOp->Dump();
+        std::string unaryOp;
+        std::unique_ptr<BaseAST> unaryExp;
+        std::unique_ptr<std::string> Dump() const override {
+            if(unaryOp == "+") return unaryExp->Dump();
+            auto rig = unaryExp->Dump();
+            auto lef = unaryid.next();
+            std::cout << lef << " = ";
+            if(unaryOp == "!"){
+                std::cout << "eq 0, "; 
+            }else if(unaryOp == "-"){
+                std::cout << "sub 0, "; 
+            }
+            std::cout << (*rig) << "\n";
+            return std::unique_ptr<std::string>(new std::string(lef));            
         }
 };
-class UnaryOpAST : public BaseAST {
+
+class AddExp1 : public BaseAST {
     public:
-        std::string unaryOp;
-        void Dump() const override {
-            auto out = [](const std::string &s){
-                std::cout << s << std::endl;
-            };
-            if(unaryOp == "!"){
-                out(unaryid.next() +  " = eq 0, " + unaryid.pre());
-            }else if(unaryOp == "-"){
-                out(unaryid.next() +  " = sub 0, " + unaryid.pre());
+        std::unique_ptr<BaseAST> mulExp;
+        std::unique_ptr<std::string> Dump() const override {
+           return mulExp->Dump();
+        }
+};
+class AddExp2 : public BaseAST {
+    public:
+        std::unique_ptr<BaseAST> addExp;
+        std::string add;
+        std::unique_ptr<BaseAST> mulExp;
+        std::unique_ptr<std::string> Dump() const override {
+            auto rig1 = addExp->Dump();
+            auto rig2 = mulExp->Dump();
+            auto lef = unaryid.next();
+            std::cout << lef << " = ";
+            if(add == "+"){
+                std::cout << "add ";
+            }else if(add == "-"){
+                std::cout << "sub ";
             }
+            std::cout << (*rig1) << ", " << (*rig2) << '\n';
+            return std::unique_ptr<std::string>(new std::string(lef));
+        }
+};
+
+class MulExp1 : public BaseAST {
+    public:
+        std::unique_ptr<BaseAST> unaryExp;
+        std::unique_ptr<std::string> Dump() const override {
+           return unaryExp->Dump();
+        }
+};
+class MulExp2 : public BaseAST {
+    public:
+        std::unique_ptr<BaseAST> mulExp;
+        std::string mul;
+        std::unique_ptr<BaseAST> unaryExp;
+        std::unique_ptr<std::string> Dump() const override {
+            auto rig1 = mulExp->Dump();
+            auto rig2 = unaryExp->Dump();
+            auto lef = unaryid.next();
+            std::cout << lef << " = ";
+            if(mul == "*"){
+                std::cout << "mul ";
+            }else if(mul == "/"){
+                std::cout << "div ";
+            }else if(mul == "%"){
+                std::cout << "mod ";
+            }
+            std::cout << (*rig1) << ", " << (*rig2) << '\n';
+            return std::unique_ptr<std::string>(new std::string(lef));
         }
 };

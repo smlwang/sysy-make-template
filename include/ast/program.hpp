@@ -8,12 +8,12 @@
 // Block     ::= "{" Stmt "}";
 // Stmt      ::= "return" Number ";";
 // Number    ::= INT_CONST;
-
 class CompUnitAST : public BaseAST {
     public:
         std::unique_ptr<BaseAST> func_def;
-        void Dump() const override {
+        std::unique_ptr<std::string> Dump() const override {
             func_def->Dump();
+            return nullptr;
         }
 };
 
@@ -22,36 +22,40 @@ class FuncDefAST : public BaseAST {
         std::unique_ptr<BaseAST> func_type;
         std::string ident;
         std::unique_ptr<BaseAST> block;
-        void Dump() const override {
+        std::unique_ptr<std::string> Dump() const override {
             std::cout << "fun @" << ident << "(): ";
             func_type->Dump();
             std::cout << " ";
             block->Dump();
+            return nullptr;
         }
 };
 class FuncTypeAST : public BaseAST {
     public:
         std::string ident;
-        void Dump() const override {
+        std::unique_ptr<std::string> Dump() const override {
             if(ident == "int") std::cout << "i32";
             else std::cout << ident;
+            return nullptr;
         }
 };
 class BlockAST : public BaseAST {
     public:
         std::unique_ptr<BaseAST> stmt;
-        void Dump() const override {
+        std::unique_ptr<std::string> Dump() const override {
             std::cout << "{\n";
             std::cout << "%entry:\n";
             stmt->Dump();
             std::cout << "}";
+            return nullptr;
         }
 };
 class StmtAST : public BaseAST {
     public:
         std::unique_ptr<BaseAST> exp;
-        void Dump() const override {
-            exp->Dump();
-            std::cout << "ret " << unaryid.get() << std::endl;
+        std::unique_ptr<std::string> Dump() const override {
+            auto ret = exp->Dump();
+            std::cout << "ret " << (*ret) << std::endl;
+            return nullptr;
         }
 };

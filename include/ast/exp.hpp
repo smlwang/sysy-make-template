@@ -149,7 +149,7 @@ class LAndExp2 : public BaseAST {
             auto lef1 = unaryid.next();
             std::cout << lef1 << " = ne 0, " << (*rig1) << "\n";
             auto lef2 = unaryid.next();
-            std::cout << lef2 << " = ne 0, " << (*rig1) << "\n";
+            std::cout << lef2 << " = ne 0, " << (*rig2) << "\n";
             auto lef3 = unaryid.next();
             std::cout << lef3 << " = and " << lef1 << ", " << lef2 << "\n";
             return std::unique_ptr<std::string>(new std::string(lef3));

@@ -17,4 +17,5 @@ class BaseAST {
     public:
         virtual ~BaseAST() = default;
         virtual std::unique_ptr<std::string> Dump() const = 0;
+        virtual int Eval() const = 0;
 };

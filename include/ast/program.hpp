@@ -15,6 +15,7 @@ class CompUnitAST : public BaseAST {
             func_def->Dump();
             return nullptr;
         }
+        int Eval() const override { return 0; }
 };
 
 class FuncDefAST : public BaseAST {
@@ -29,6 +30,7 @@ class FuncDefAST : public BaseAST {
             block->Dump();
             return nullptr;
         }
+        int Eval() const override { return 0; }
 };
 class FuncTypeAST : public BaseAST {
     public:
@@ -38,6 +40,7 @@ class FuncTypeAST : public BaseAST {
             else std::cout << ident;
             return nullptr;
         }
+        int Eval() const override { return 0; }
 };
 class BlockAST : public BaseAST {
     public:
@@ -49,6 +52,7 @@ class BlockAST : public BaseAST {
             std::cout << "}";
             return nullptr;
         }
+        int Eval() const override { return 0; }
 };
 class StmtAST : public BaseAST {
     public:
@@ -58,4 +62,5 @@ class StmtAST : public BaseAST {
             std::cout << "ret " << (*ret) << std::endl;
             return nullptr;
         }
+        int Eval() const override { return 0; }
 };

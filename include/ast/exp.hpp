@@ -69,6 +69,24 @@ class PrimaryExp2 : public BaseAST {
             return atoi(number.c_str());
         }
 };
+class PrimaryExp3 : public BaseAST {
+    public:
+        std::unique_ptr<BaseAST> lVal;
+        std::unique_ptr<std::string> Dump() const override {
+            
+        }
+        int Eval() const override {
+        }
+};
+class LVal : public BaseAST {
+    public:
+        std::string ident;
+        std::unique_ptr<std::string> Dump() const override {
+            
+        }
+        int Eval() const override {
+        }
+};
 class UnaryExp1 : public BaseAST {
     public:// PrimaryExp
         std::unique_ptr<BaseAST> primaryExp;

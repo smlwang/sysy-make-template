@@ -12,7 +12,7 @@ static std::map<std::string, std::string> kexp = {
     {"==", "eq"},   {"!=", "ne"},
     {"&", "and"},  {"|", "or"},
 };
-static Idgenerator unaryid("%_unary_tmp_");
+static Idgenerator irid("%ir_t");
 class BaseAST {
     public:
         virtual ~BaseAST() = default;

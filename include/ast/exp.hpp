@@ -1,5 +1,6 @@
 #pragma once
 #include"def.hpp"
+
 // Stmt        ::= "return" Exp ";";
 // Exp         ::= AddExp;
 // AddExp      ::= MulExp | AddExp ("+" | "-") MulExp;
@@ -14,7 +15,7 @@ inline std::unique_ptr<std::string> thrOp(const std::unique_ptr<BaseAST> &l,\
                 const std::string &op){
         auto rig1 = l->Dump();
         auto rig2 = r->Dump();
-        auto lef = unaryid.next();
+        auto lef = irid.next();
         std::cout << lef << " = " << kexp[op] << " ";
         std::cout << (*rig1) << ", " << (*rig2) << "\n"; 
         return std::unique_ptr<std::string>(new std::string(lef));
@@ -37,7 +38,7 @@ class PrimaryExp2 : public BaseAST {
     public: // Number
         std::string number;
         std::unique_ptr<std::string> Dump() const override {
-            std::string lef = unaryid.next();
+            std::string lef = irid.next();
             std::cout << lef << " = sub " << number << ", 0\n";
             return std::unique_ptr<std::string>(new std::string(lef));
         }
@@ -56,7 +57,7 @@ class UnaryExp2 : public BaseAST {
         std::unique_ptr<std::string> Dump() const override {
             if(unaryOp == "+") return unaryExp->Dump();
             auto rig = unaryExp->Dump();
-            auto lef = unaryid.next();
+            auto lef = irid.next();
             std::cout << lef << " = ";
             if(unaryOp == "!"){
                 std::cout << "eq 0, "; 
@@ -146,11 +147,11 @@ class LAndExp2 : public BaseAST {
         std::unique_ptr<std::string> Dump() const override {
             auto rig1 = lAndExp->Dump();
             auto rig2 = eqExp->Dump();
-            auto lef1 = unaryid.next();
+            auto lef1 = irid.next();
             std::cout << lef1 << " = ne 0, " << (*rig1) << "\n";
-            auto lef2 = unaryid.next();
+            auto lef2 = irid.next();
             std::cout << lef2 << " = ne 0, " << (*rig2) << "\n";
-            auto lef3 = unaryid.next();
+            auto lef3 = irid.next();
             std::cout << lef3 << " = and " << lef1 << ", " << lef2 << "\n";
             return std::unique_ptr<std::string>(new std::string(lef3));
         }
@@ -168,7 +169,7 @@ class LOrExp2 : public BaseAST {
         std::unique_ptr<BaseAST> lAndExp2;
         std::unique_ptr<std::string> Dump() const override {
             auto rig = *thrOp(lAndExp1, lAndExp2, "|");
-            auto lef = unaryid.next();
+            auto lef = irid.next();
             std::cout << lef << " = ne 0, " << rig << "\n";
             return std::unique_ptr<std::string>(new std::string(lef));
         }

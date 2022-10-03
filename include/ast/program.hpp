@@ -6,7 +6,7 @@
 // FuncType  ::= "int";
 
 // Block     ::= "{" Stmt "}";
-// Stmt      ::= "return" Number ";";
+// Stmt      ::= "return" Exp ";";
 // Number    ::= INT_CONST;
 class CompUnitAST : public BaseAST {
     public:

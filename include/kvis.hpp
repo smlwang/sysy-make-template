@@ -100,7 +100,7 @@ void Visit(const koopa_raw_value_t &value) {
   }
 }
 void Visit(const koopa_raw_return_t &ret) {
-    Line("mv a0, " + reg.nowT());
+    Line("mv a0, " + regaddr[(unsigned long long)(&ret.value->kind.data)]);
     Line("ret");
 }
 
@@ -114,10 +114,10 @@ std::string dealreg(const koopa_raw_value_t& value){
     case KOOPA_RVT_INTEGER:
         int num = kind.data.integer.value;
         if(!num) return "x0";
-        std::cout << "li " << reg.nextT() << ", " << std::to_string(num) << std::endl;
-        return reg.nowT();
+        std::cout << "li " << reg.next() << ", " << std::to_string(num) << std::endl;
+        return reg.now();
     }
-    return reg.nowT();
+    return regaddr[(unsigned long long)(&(value->kind.data))];
 }
 void Visit(const koopa_raw_binary_t &binary){
     auto op = binary.op;
@@ -125,18 +125,70 @@ void Visit(const koopa_raw_binary_t &binary){
     auto r = binary.rhs;
     std::string left = dealreg(l);
     std::string right = dealreg(r);
-    std::string cur = reg.nextT(); 
+    std::string cur = reg.next(); 
+    regaddr[(unsigned long long)(&binary)] = cur;
+    auto out3 = [](const std::string& op, const std::string &dist, const std::string &l, const std::string &r){
+        std::cout << op << " " << dist << ", " << l << ", " << r << "\n";
+    };
+    auto out2 = [](const std::string& op, const std::string &dist, const std::string &l){
+        std::cout << op << " " << dist << ", " << l << "\n";
+    };
     switch (op)
     {
     case KOOPA_RBO_ADD:
-        std::cout << "add " << cur << ", " << left << ", " << right << std::endl;
+        out3("add", cur, left, right);
         break;
-    case KOOPA_RBO_SUB:
-        std::cout << "sub " << cur << ", " << left << ", " << right << std::endl;
+    case KOOPA_RBO_AND:
+        out3("and", cur, left, right);
+        break;
+    case KOOPA_RBO_DIV:
+        out3("div", cur, left, right);
         break;
     case KOOPA_RBO_EQ:
-        std::cout << "xor " << cur << ", " << left << ", " << right << std::endl;
-        std::cout << "seqz " << cur << ", " << cur << std::endl;
+        out3("xor", cur, left, right);
+        out2("seqz", cur, cur);
+        break;
+    case KOOPA_RBO_GE:
+        out3("slt", cur, left, right);
+        out2("seqz", cur, cur);
+        break;
+    case KOOPA_RBO_GT:
+        out3("sgt", cur, left, right);
+        break;
+    case KOOPA_RBO_LE:
+        out3("sgt", cur, left, right);
+        out2("seqz", cur, cur);
+        break;
+    case KOOPA_RBO_LT:
+        out3("slt", cur, left, right);
+        break;
+    case KOOPA_RBO_MOD:
+        out3("rem", cur, left, right);
+        break;
+    case KOOPA_RBO_MUL:
+        out3("mul", cur, left, right);
+        break;
+    case KOOPA_RBO_NOT_EQ:
+        out3("xor", cur, left, right);
+        out2("snez", cur, cur);
+        break;
+    case KOOPA_RBO_OR:
+        out3("or", cur, left, right);
+        break;
+    case KOOPA_RBO_SAR:
+        out3("sra", cur, left, right);
+        break;
+    case KOOPA_RBO_SHL:
+        out3("sll", cur, left, right);
+        break;
+    case KOOPA_RBO_SHR:
+        out3("srl", cur, left, right);
+        break;
+    case KOOPA_RBO_SUB:
+        out3("sub", cur, left, right);
+        break;
+    case KOOPA_RBO_XOR:
+        out3("xor", cur, left, right);
         break;
     default:
         break;

@@ -1,34 +1,24 @@
 #pragma once
 #include<iostream>
+#include<map>
 class regEnum
 {
 private:
-    int tcnt;
-    int acnt;
+    std::string reg[15] = {
+        "t0", "t1", "t2", "t3", "t4", "t5", "t6",
+        "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7",
+    };
+    int idx;
 public:
-    regEnum(){tcnt = 0, acnt = 0;}
+    regEnum(){idx = 0;}
     ~regEnum(){}
-    std::string nextT(){
-        ++tcnt;
-        if(tcnt >= 7) tcnt -= 7;
-        return "t" + std::to_string(tcnt);
-    }
-    std::string nowT(){
-        return "t" + std::to_string(tcnt);
-    }
-    std::string preT(){
-        return "t" + std::to_string((tcnt + 6)  % 7);
-    }
-    std::string nextA(){
-        ++tcnt;
-        if(tcnt >= 8) tcnt -= 8;
-        return "a" + std::to_string(acnt);
-    }
-    std::string nowA(){
-        return "a" + std::to_string(acnt);
-    }
-    std::string preA(){
-        return "a" + std::to_string((acnt + 7) % 8);
+    const std::string next(){
+        idx = (idx + 1) % 15;
+        return reg[idx];
+    } 
+    const std::string now(){
+        return reg[idx];
     }
 };
 static regEnum reg;
+static std::map<unsigned long long, std::string> regaddr;

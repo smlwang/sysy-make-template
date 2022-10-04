@@ -44,12 +44,33 @@ class FuncTypeAST : public BaseAST {
 };
 class BlockAST : public BaseAST {
     public:
-        std::unique_ptr<BaseAST> stmt;
+        std::vector<std::unique_ptr<BaseAST>> blockItems;
         std::unique_ptr<std::string> Dump() const override {
+            irid.in();
             std::cout << "{\n";
             std::cout << "%entry:\n";
-            stmt->Dump();
+            for(int i = 0; i < blockItems.size(); i++)
+                blockItems[i]->Dump();
             std::cout << "}";
+            irid.out();
+            return nullptr;
+        }
+        int Eval() const override { return 0; }
+};
+class BItem1 : public BaseAST {
+    public:
+        std::unique_ptr<BaseAST> decl;
+        std::unique_ptr<std::string> Dump() const override {
+            decl->Dump();
+            return nullptr;
+        }
+        int Eval() const override { return 0; }
+};
+class BItem2 : public BaseAST {
+    public:
+        std::unique_ptr<BaseAST> stmt;
+        std::unique_ptr<std::string> Dump() const override {
+            stmt->Dump();
             return nullptr;
         }
         int Eval() const override { return 0; }

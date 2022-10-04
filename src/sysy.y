@@ -21,12 +21,13 @@
     int int_val;
     BaseAST *ast_val;
 }
-%token INT RETURN
+%token INT RETURN CONST
 %token <str_val> IDENT MUL ADD EQ REL LAND LOR
 %token <int_val> INT_CONST
 
-%type <ast_val> FuncDef FuncType Block Stmt 
+%type <ast_val> FuncDef FuncType Block BlockItem Stmt 
 %type <ast_val> Exp PrimaryExp UnaryExp AddExp MulExp LOrExp RelExp EqExp LAndExp
+%type <ast_val> Decl ConstDecl BType ConstDef ConstExp ConstInitVal LVal 
 %type <int_val> Number
 %type <str_val> UnaryOp
 
@@ -84,6 +85,11 @@ PrimaryExp
     | Number {
         auto ast = new PrimaryExp2();
         ast->number = *unique_ptr<string>(new string(to_string($1)));
+        $$ = ast;
+    }
+    | LVal {
+        auto ast = new PrimaryExp3();
+        ast->lVal = unique_ptr<BaseAST>($1);
         $$ = ast;
     }
     ;
@@ -194,6 +200,61 @@ LOrExp
         ast->lAndExp2 = unique_ptr<BaseAST>($3);
         $$ = ast;
     }
+Decl
+    : ConstDecl {
+        auto ast = new DeclAST();
+        ast->constDecl = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    ;
+ConstDecl
+    : CONST BType ConstDef ';' {
+
+    }
+    ;
+ConstDefs
+    : 
+ConstDef
+    : IDENT '=' ConstInitVal {
+        auto ast = new ConstDefAST();
+        ast->ident = *unique_ptr<string>($1);
+        ast->constInitval = unique_ptr<BaseAST>($3);
+        $$ = ast;
+    }
+    ;
+ConstInitVal
+    : ConstExp {
+        auto ast = new ConstInitValAST();
+        ast->decl = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    ;
+BlockItem
+    : Decl {
+        auto ast = new BItem1();
+        ast->decl = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    | Stmt {
+        auto ast = new BItem2();
+        ast->stmt = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    ;
+LVal
+    : IDENT {
+        auto ast = new LValAST();
+        ast->ident = *unique_ptr<string>($1);
+        $$ = ast;
+    }
+    ;
+ConstExp
+    : Exp {
+        auto ast = new ConstExpAST();
+        ast->exp = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    ;
 %%
 void yyerror(unique_ptr<BaseAST> &ast, const char *s){
     cerr << "error: " << s << endl;

@@ -1,5 +1,6 @@
 #pragma once
 #include<memory>
+#include<vector>
 #include<iostream>
 #include"../tool/genId.hpp"
 #include<map>
@@ -12,7 +13,7 @@ static std::map<std::string, std::string> kexp = {
     {"==", "eq"},   {"!=", "ne"},
     {"&", "and"},  {"|", "or"},
 };
-static Idgenerator irid("%ir_t");
+static Idgenerator irid("%ir_t", {});
 class BaseAST {
     public:
         virtual ~BaseAST() = default;

@@ -61,9 +61,7 @@ class PrimaryExp2 : public BaseAST {
     public: // Number
         std::string number;
         std::unique_ptr<std::string> Dump() const override {
-            std::string lef = irid.next();
-            std::cout << lef << " = sub " << number << ", 0\n";
-            return std::unique_ptr<std::string>(new std::string(lef));
+            return std::unique_ptr<std::string>(new std::string(number));
         }
         int Eval() const override {
             return atoi(number.c_str());

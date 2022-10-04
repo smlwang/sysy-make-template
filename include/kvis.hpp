@@ -28,6 +28,18 @@ void Line(const std::string &opt){
     std::cout << opt << std::endl;
 }
 
+std::string dealreg(const koopa_raw_value_t& value){
+  const auto &kind = value->kind;
+    switch (kind.tag)
+    {
+    case KOOPA_RVT_INTEGER:
+        int num = kind.data.integer.value;
+        if(!num) return "x0";
+        std::cout << "li " << reg.next() << ", " << std::to_string(num) << std::endl;
+        return reg.now();
+    }
+    return regaddr[(unsigned long long)(&(value->kind.data))];
+}
 void Visit(const koopa_raw_program_t &program) {
   // 访问所有全局变量
   Visit(program.values);
@@ -100,24 +112,12 @@ void Visit(const koopa_raw_value_t &value) {
   }
 }
 void Visit(const koopa_raw_return_t &ret) {
-    Line("mv a0, " + regaddr[(unsigned long long)(&ret.value->kind.data)]);
+    Line("mv a0, " + dealreg(ret.value));
     Line("ret");
 }
 
 void Visit(const koopa_raw_integer_t &integer){
     std::cout << std::to_string(integer.value);
-}
-std::string dealreg(const koopa_raw_value_t& value){
-  const auto &kind = value->kind;
-    switch (kind.tag)
-    {
-    case KOOPA_RVT_INTEGER:
-        int num = kind.data.integer.value;
-        if(!num) return "x0";
-        std::cout << "li " << reg.next() << ", " << std::to_string(num) << std::endl;
-        return reg.now();
-    }
-    return regaddr[(unsigned long long)(&(value->kind.data))];
 }
 void Visit(const koopa_raw_binary_t &binary){
     auto op = binary.op;

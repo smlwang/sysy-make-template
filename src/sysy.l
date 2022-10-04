@@ -32,6 +32,8 @@ LOrOp                   \|\|
 {BlockComment}          {}
 "int"                   {return INT;}
 "return"                {return RETURN;}
+"const"                 {return CONST;}
+
 {Identifier}            {yylval.str_val = new string(yytext); return IDENT;}
 {Decimal}               {yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST;}
 {Octal}                 {yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST;}

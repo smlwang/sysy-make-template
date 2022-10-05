@@ -57,15 +57,15 @@ class BlockAST : public BaseAST {
         }
         int Eval() const override { return 0; }
 };
-// class BItem1 : public BaseAST {
-//     public:
-//         std::unique_ptr<BaseAST> decl;
-//         std::unique_ptr<std::string> Dump() const override {
-//             decl->Dump();
-//             return nullptr;
-//         }
-//         int Eval() const override { return 0; }
-// };
+class BlockItemAST : public BaseAST {
+    public:
+        std::unique_ptr<BaseAST> item;
+        std::unique_ptr<std::string> Dump() const override {
+            item->Dump();
+            return nullptr;
+        }
+        int Eval() const override { return 0; }
+};
 // class BItem2 : public BaseAST {
 //     public:
 //         std::unique_ptr<BaseAST> stmt;
@@ -75,12 +75,21 @@ class BlockAST : public BaseAST {
 //         }
 //         int Eval() const override { return 0; }
 // };
-class StmtAST : public BaseAST {
-    public:
+class Stmt1 : public BaseAST {
+    public: // return exp;
         std::unique_ptr<BaseAST> exp;
         std::unique_ptr<std::string> Dump() const override {
             auto ret = exp->Dump();
             std::cout << "ret " << (*ret) << std::endl;
+            return nullptr;
+        }
+        int Eval() const override { return 0; }
+};
+class Stmt2 : public BaseAST {
+    public: // lVal = exp;
+        std::unique_ptr<BaseAST> lVal;
+        std::unique_ptr<BaseAST> exp;
+        std::unique_ptr<std::string> Dump() const override {
             return nullptr;
         }
         int Eval() const override { return 0; }

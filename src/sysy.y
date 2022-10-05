@@ -26,10 +26,10 @@
 %token <str_val> IDENT MUL ADD EQ REL LAND LOR
 %token <int_val> INT_CONST
 
-%type <ast_val> FuncDef FuncType Block Stmt 
+%type <ast_val> FuncDef FuncType Block Stmt BlockItem
 %type <ast_val> Exp PrimaryExp UnaryExp AddExp MulExp LOrExp RelExp EqExp LAndExp
-%type <ast_val> Decl ConstDecl BType ConstDef ConstExp ConstInitVal LVal
-%type <arr_val> ConstDefs BlockItem
+%type <ast_val> Decl ConstDecl VarDecl BType ConstDef VarDef ConstExp ConstInitVal InitVal LVal
+%type <arr_val> ConstDefs VarDefs BlockItems
 %type <int_val> Number
 %type <str_val> UnaryOp
 
@@ -63,35 +63,45 @@ Block
         ast->blockItems = vector<BaseAST*>({});
         $$ = ast;
     }
-    | '{' BlockItem '}' {
+    | '{' BlockItems '}' {
         auto ast = new BlockAST();
         ast->blockItems = *unique_ptr<vector<BaseAST*>>($2);
         $$ = ast;
     }
     ;
+BlockItems
+    : BlockItem {
+        auto arr = new vector<BaseAST*>();
+        (*arr).push_back($1);
+        $$ = arr;
+    }
+    | BlockItems BlockItem {
+        (*$1).push_back($2);
+        $$ = $1; 
+    }
+    ;
 BlockItem
     : Decl {
-        auto arr = new vector<BaseAST*>();
-        (*arr).push_back($1);
-        $$ = arr;
+        auto ast = new BlockItemAST();
+        ast->item = unique_ptr<BaseAST>($1);
+        $$ = ast;
     }
     | Stmt {
-        auto arr = new vector<BaseAST*>();
-        (*arr).push_back($1);
-        $$ = arr;
+        auto ast = new BlockItemAST();
+        ast->item = unique_ptr<BaseAST>($1);
+        $$ = ast;
     } 
-    | BlockItem Block {
-        (*$1).push_back($2);
-        $$ = $1; 
-    }
-    | BlockItem Stmt {
-        (*$1).push_back($2);
-        $$ = $1; 
-    }
+    ;
 Stmt
     : RETURN Exp ';' {
-        auto ast = new StmtAST();
+        auto ast = new Stmt1();
         ast->exp = unique_ptr<BaseAST>($2);
+        $$ = ast;
+    }
+    | LVal '=' Exp ';' {
+        auto ast = new Stmt2();
+        ast->lVal = unique_ptr<BaseAST>($1);
+        ast->exp = unique_ptr<BaseAST>($3);
         $$ = ast;
     }
     ;
@@ -226,10 +236,16 @@ LOrExp
         ast->lAndExp2 = unique_ptr<BaseAST>($3);
         $$ = ast;
     }
+    ;
 Decl
     : ConstDecl {
         auto ast = new DeclAST();
-        ast->constDecl = unique_ptr<BaseAST>($1);
+        ast->decl = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    | VarDecl {
+        auto ast = new DeclAST();
+        ast->decl = unique_ptr<BaseAST>($1);
         $$ = ast;
     }
     ;
@@ -248,13 +264,50 @@ ConstDefs
     | ConstDefs ',' ConstDef {
         (*$1).push_back($3);
         $$ = $1;
-    } 
+    }
+    ;
 ConstDef
     : IDENT '=' ConstInitVal {
         auto ast = new ConstDefAST();
         ast->ident = *unique_ptr<string>($1);
-        ast->constInitval = unique_ptr<BaseAST>($3);
+        ast->constInitVal = unique_ptr<BaseAST>($3);
         $$ = ast;
+    }
+    ;
+VarDecl
+    : BType VarDefs ';' {
+        auto ast = new VarDeclAST();
+        ast->bType = unique_ptr<BaseAST>($1);
+        ast->varDef = *unique_ptr<vector<BaseAST*>>($2);
+        $$ = ast;
+    }
+    ;
+VarDefs
+    : VarDef {
+        $$ = new vector<BaseAST*>({($1)});
+    }
+    | VarDefs ',' VarDef {
+        (*$1).push_back($3);
+        $$ = $1;
+    }
+    ;
+VarDef
+    : IDENT '=' InitVal {
+        auto ast = new VarDef1();
+        ast->ident = *unique_ptr<string>($1);
+        ast->initVal = unique_ptr<BaseAST>($3);
+        $$ = ast;
+    }
+    | IDENT {
+        auto ast = new VarDef2();
+        ast->ident = *unique_ptr<string>($1);
+        $$ = ast;
+    }
+    ;
+InitVal
+    : Exp {
+        auto ast = new InitValAST();
+        ast->exp = unique_ptr<BaseAST>($1);
     }
     ;
 ConstInitVal

@@ -2,9 +2,9 @@
 #include"def.hpp"
 class DeclAST : public BaseAST {
     public:
-        std::unique_ptr<BaseAST> constDecl;
+        std::unique_ptr<BaseAST> decl;
         std::unique_ptr<std::string> Dump() const override {
-            constDecl->Dump();
+            decl->Dump();
             return nullptr;
         }
         int Eval() const override { return 0; }
@@ -40,9 +40,9 @@ class ConstInitValAST : public BaseAST {
 class ConstDefAST : public BaseAST {
     public:
         std::string ident;
-        std::unique_ptr<BaseAST> constInitval;
+        std::unique_ptr<BaseAST> constInitVal;
         std::unique_ptr<std::string> Dump() const override {
-            int val = constInitval->Eval();
+            int val = constInitVal->Eval();
             constSymbol.add(ident, val);
             return nullptr;
         }
@@ -55,4 +55,40 @@ class ConstExpAST : public BaseAST {
             return nullptr;
         }
         int Eval() const override { return exp->Eval(); }
+};
+class InitValAST : public BaseAST {
+    public:
+        std::unique_ptr<BaseAST> exp;
+        std::unique_ptr<std::string> Dump() const override {
+            return nullptr;
+        }
+        int Eval() const override { return exp->Eval(); }
+};
+ 
+class VarDeclAST : public BaseAST {
+    public:
+        std::unique_ptr<BaseAST> bType;
+        std::vector<BaseAST*> varDef;
+        std::unique_ptr<std::string> Dump() const override {
+            return nullptr;
+        }
+        int Eval() const override { return 0; }
+};
+
+class VarDef1 : public BaseAST {
+    public:
+        std::string ident;
+        std::unique_ptr<BaseAST> initVal;
+        std::unique_ptr<std::string> Dump() const override {
+            return nullptr;
+        }
+        int Eval() const override { return 0; }
+};
+class VarDef2 : public BaseAST {
+    public:
+        std::string ident;
+        std::unique_ptr<std::string> Dump() const override {
+            return nullptr;
+        }
+        int Eval() const override { return 0; }
 };

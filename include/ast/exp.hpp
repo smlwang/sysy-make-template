@@ -74,7 +74,7 @@ class PrimaryExp3 : public BaseAST {
             return lVal->Dump();
         }
         int Eval() const override {
-            
+            return lVal->Eval();
         }
 };
 class LValAST : public BaseAST {
@@ -85,7 +85,9 @@ class LValAST : public BaseAST {
                 return uniqptr(std::to_string(constSymbol.get(ident)));
             return nullptr;
         }
-        int Eval() const override {return 0;}
+        int Eval() const override {
+            return constSymbol.get(ident);
+        }
 };
 class UnaryExp1 : public BaseAST {
     public:// PrimaryExp

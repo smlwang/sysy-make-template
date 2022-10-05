@@ -44,7 +44,7 @@ class FuncTypeAST : public BaseAST {
 };
 class BlockAST : public BaseAST {
     public:
-        std::vector<std::unique_ptr<BaseAST>> blockItems;
+        std::vector<BaseAST*> blockItems;
         std::unique_ptr<std::string> Dump() const override {
             irid.in();
             std::cout << "{\n";
@@ -57,24 +57,24 @@ class BlockAST : public BaseAST {
         }
         int Eval() const override { return 0; }
 };
-class BItem1 : public BaseAST {
-    public:
-        std::unique_ptr<BaseAST> decl;
-        std::unique_ptr<std::string> Dump() const override {
-            decl->Dump();
-            return nullptr;
-        }
-        int Eval() const override { return 0; }
-};
-class BItem2 : public BaseAST {
-    public:
-        std::unique_ptr<BaseAST> stmt;
-        std::unique_ptr<std::string> Dump() const override {
-            stmt->Dump();
-            return nullptr;
-        }
-        int Eval() const override { return 0; }
-};
+// class BItem1 : public BaseAST {
+//     public:
+//         std::unique_ptr<BaseAST> decl;
+//         std::unique_ptr<std::string> Dump() const override {
+//             decl->Dump();
+//             return nullptr;
+//         }
+//         int Eval() const override { return 0; }
+// };
+// class BItem2 : public BaseAST {
+//     public:
+//         std::unique_ptr<BaseAST> stmt;
+//         std::unique_ptr<std::string> Dump() const override {
+//             stmt->Dump();
+//             return nullptr;
+//         }
+//         int Eval() const override { return 0; }
+// };
 class StmtAST : public BaseAST {
     public:
         std::unique_ptr<BaseAST> exp;

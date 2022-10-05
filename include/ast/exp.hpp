@@ -1,6 +1,6 @@
 #pragma once
 #include"def.hpp"
-
+#define uniqptr(x) std::unique_ptr<std::string>(new std::string(x))
 // Stmt        ::= "return" Exp ";";
 // Exp         ::= AddExp;
 // AddExp      ::= MulExp | AddExp ("+" | "-") MulExp;
@@ -17,7 +17,7 @@ static std::unique_ptr<std::string> thrOp(const std::unique_ptr<BaseAST> &l,\
         auto lef = irid.next();
         std::cout << lef << " = " << kexp[op] << " ";
         std::cout << (*rig1) << ", " << (*rig2) << "\n"; 
-        return std::unique_ptr<std::string>(new std::string(lef));
+        return uniqptr(lef);
 }
 static int eval(const std::unique_ptr<BaseAST> &l,\
                 const std::unique_ptr<BaseAST> &r,\
@@ -61,7 +61,7 @@ class PrimaryExp2 : public BaseAST {
     public: // Number
         std::string number;
         std::unique_ptr<std::string> Dump() const override {
-            return std::unique_ptr<std::string>(new std::string(number));
+            return uniqptr(number);
         }
         int Eval() const override {
             return atoi(number.c_str());
@@ -71,19 +71,21 @@ class PrimaryExp3 : public BaseAST {
     public:
         std::unique_ptr<BaseAST> lVal;
         std::unique_ptr<std::string> Dump() const override {
-            
+            return lVal->Dump();
         }
         int Eval() const override {
+            
         }
 };
-class LVal : public BaseAST {
+class LValAST : public BaseAST {
     public:
         std::string ident;
         std::unique_ptr<std::string> Dump() const override {
-            
+            if(constSymbol.has(ident)) 
+                return uniqptr(std::to_string(constSymbol.get(ident)));
+            return nullptr;
         }
-        int Eval() const override {
-        }
+        int Eval() const override {return 0;}
 };
 class UnaryExp1 : public BaseAST {
     public:// PrimaryExp

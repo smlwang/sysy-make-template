@@ -20,14 +20,16 @@
     std::string *str_val;
     int int_val;
     BaseAST *ast_val;
+    std::vector<BaseAST*> *arr_val;
 }
 %token INT RETURN CONST
 %token <str_val> IDENT MUL ADD EQ REL LAND LOR
 %token <int_val> INT_CONST
 
-%type <ast_val> FuncDef FuncType Block BlockItem Stmt 
+%type <ast_val> FuncDef FuncType Block Stmt 
 %type <ast_val> Exp PrimaryExp UnaryExp AddExp MulExp LOrExp RelExp EqExp LAndExp
-%type <ast_val> Decl ConstDecl BType ConstDef ConstExp ConstInitVal LVal 
+%type <ast_val> Decl ConstDecl BType ConstDef ConstExp ConstInitVal LVal
+%type <arr_val> ConstDefs BlockItem
 %type <int_val> Number
 %type <str_val> UnaryOp
 
@@ -56,12 +58,36 @@ FuncType
     }
     ;
 Block
-    : '{' Stmt '}' {
+    : '{' '}' {
         auto ast = new BlockAST();
-        ast->stmt = unique_ptr<BaseAST>($2);
+        ast->blockItems = vector<BaseAST*>({});
+        $$ = ast;
+    }
+    | '{' BlockItem '}' {
+        auto ast = new BlockAST();
+        ast->blockItems = *unique_ptr<vector<BaseAST*>>($2);
         $$ = ast;
     }
     ;
+BlockItem
+    : Decl {
+        auto arr = new vector<BaseAST*>();
+        (*arr).push_back($1);
+        $$ = arr;
+    }
+    | Stmt {
+        auto arr = new vector<BaseAST*>();
+        (*arr).push_back($1);
+        $$ = arr;
+    } 
+    | BlockItem Block {
+        (*$1).push_back($2);
+        $$ = $1; 
+    }
+    | BlockItem Stmt {
+        (*$1).push_back($2);
+        $$ = $1; 
+    }
 Stmt
     : RETURN Exp ';' {
         auto ast = new StmtAST();
@@ -208,12 +234,21 @@ Decl
     }
     ;
 ConstDecl
-    : CONST BType ConstDef ';' {
-
+    : CONST BType ConstDefs ';' {
+        auto ast = new ConstDeclAST();
+        ast->bType = unique_ptr<BaseAST>($2);
+        ast->constDef = *unique_ptr<vector<BaseAST*>>($3);
+        $$ = ast;
     }
     ;
 ConstDefs
-    : 
+    : ConstDef {
+        $$ = new vector<BaseAST*>({($1)});
+    }
+    | ConstDefs ',' ConstDef {
+        (*$1).push_back($3);
+        $$ = $1;
+    } 
 ConstDef
     : IDENT '=' ConstInitVal {
         auto ast = new ConstDefAST();
@@ -225,19 +260,7 @@ ConstDef
 ConstInitVal
     : ConstExp {
         auto ast = new ConstInitValAST();
-        ast->decl = unique_ptr<BaseAST>($1);
-        $$ = ast;
-    }
-    ;
-BlockItem
-    : Decl {
-        auto ast = new BItem1();
-        ast->decl = unique_ptr<BaseAST>($1);
-        $$ = ast;
-    }
-    | Stmt {
-        auto ast = new BItem2();
-        ast->stmt = unique_ptr<BaseAST>($1);
+        ast->constExp = unique_ptr<BaseAST>($1);
         $$ = ast;
     }
     ;
@@ -252,6 +275,13 @@ ConstExp
     : Exp {
         auto ast = new ConstExpAST();
         ast->exp = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    ;
+BType
+    : INT {
+        auto ast = new BTypeAST();
+        ast->bType = "int";
         $$ = ast;
     }
     ;

@@ -133,6 +133,7 @@ void Visit(const koopa_raw_binary_t &binary){
     auto out2 = [](const std::string& op, const std::string &dist, const std::string &l){
         std::cout << op << " " << dist << ", " << l << "\n";
     };
+    
     switch (op)
     {
     case KOOPA_RBO_ADD:

@@ -3,7 +3,7 @@
 #include<vector>
 #include<iostream>
 #include"../tool/genId.hpp"
-#include"../tool/const_table.hpp"
+#include"../tool/symbol_table.hpp"
 #include<map>
 static std::map<std::string, std::string> kexp = {
     {"-", "sub"},   {"+", "add"},
@@ -15,7 +15,12 @@ static std::map<std::string, std::string> kexp = {
     {"&", "and"},  {"|", "or"},
 };
 static Idgenerator irid("%ir_t", {});
-static ConstSymbol constSymbol;
+static SymbolTalbe symbol;
+static std::string LoadIdent(const std::string &ident){
+    auto tmp = irid.next();
+    std::cout << tmp << " = load " << ident << "\n" ;
+    return tmp;
+}
 class BaseAST {
     public:
         virtual ~BaseAST() = default;

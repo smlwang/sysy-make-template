@@ -42,8 +42,9 @@ class ConstDefAST : public BaseAST {
         std::string ident;
         std::unique_ptr<BaseAST> constInitVal;
         std::unique_ptr<std::string> Dump() const override {
+            assert(!symbol.has(ident));
             int val = constInitVal->Eval();
-            constSymbol.add(ident, val);
+            symbol.addConst(ident, val);
             return nullptr;
         }
         int Eval() const override { return 0; }
@@ -60,7 +61,7 @@ class InitValAST : public BaseAST {
     public:
         std::unique_ptr<BaseAST> exp;
         std::unique_ptr<std::string> Dump() const override {
-            return nullptr;
+            return exp->Dump();
         }
         int Eval() const override { return exp->Eval(); }
 };
@@ -70,16 +71,26 @@ class VarDeclAST : public BaseAST {
         std::unique_ptr<BaseAST> bType;
         std::vector<BaseAST*> varDef;
         std::unique_ptr<std::string> Dump() const override {
+            for(auto def : varDef)
+                def->Dump();
             return nullptr;
         }
         int Eval() const override { return 0; }
 };
-
+static std::string creatVar(const std::string &ident){
+    auto sym = "@" + ident;
+    symbol.addVar(ident, sym);
+    std::cout << sym << " = alloc i32\n";
+    return sym;
+}
 class VarDef1 : public BaseAST {
     public:
         std::string ident;
         std::unique_ptr<BaseAST> initVal;
         std::unique_ptr<std::string> Dump() const override {
+            auto rig = initVal->Dump();
+            auto lef = creatVar(ident);
+            std::cout << "store " << (*rig) << ", " << lef << "\n";
             return nullptr;
         }
         int Eval() const override { return 0; }
@@ -88,6 +99,7 @@ class VarDef2 : public BaseAST {
     public:
         std::string ident;
         std::unique_ptr<std::string> Dump() const override {
+            creatVar(ident);
             return nullptr;
         }
         int Eval() const override { return 0; }

@@ -90,6 +90,10 @@ class Stmt2 : public BaseAST {
         std::unique_ptr<BaseAST> lVal;
         std::unique_ptr<BaseAST> exp;
         std::unique_ptr<std::string> Dump() const override {
+            auto lef = lVal->Dump();
+            // assert((*lef)[0] == '@');
+            auto rig = exp->Dump();
+            std::cout << "store " << *rig << ", " << *lef << "\n"; 
             return nullptr;
         }
         int Eval() const override { return 0; }

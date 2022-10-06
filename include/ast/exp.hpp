@@ -69,9 +69,12 @@ class PrimaryExp2 : public BaseAST {
 };
 class PrimaryExp3 : public BaseAST {
     public:
-        std::unique_ptr<BaseAST> lVal;
+        std::unique_ptr<BaseAST> lVal;// exp里的左值才需要取值
         std::unique_ptr<std::string> Dump() const override {
-            return lVal->Dump();
+            auto lval = lVal->Dump();
+            if((*lval)[0] == '@') 
+                return uniqptr(LoadIdent(*lval)); 
+            return lval;
         }
         int Eval() const override {
             return lVal->Eval();
@@ -81,12 +84,17 @@ class LValAST : public BaseAST {
     public:
         std::string ident;
         std::unique_ptr<std::string> Dump() const override {
-            if(constSymbol.has(ident)) 
-                return uniqptr(std::to_string(constSymbol.get(ident)));
+            auto val = symbol.get(ident);
+            if(val.index() == symbol.CONST) 
+                return uniqptr(std::to_string(symbol.toConst(val)));
+            if(val.index() == symbol.VAR){
+                return uniqptr(symbol.toVar(val));
+            }
+            assert(false);
             return nullptr;
         }
         int Eval() const override {
-            return constSymbol.get(ident);
+            return symbol.getConst(ident);
         }
 };
 class UnaryExp1 : public BaseAST {

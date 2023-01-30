@@ -93,15 +93,35 @@ BlockItem
     } 
     ;
 Stmt
-    : RETURN Exp ';' {
-        auto ast = new Stmt1();
-        ast->exp = unique_ptr<BaseAST>($2);
-        $$ = ast;
-    }
-    | LVal '=' Exp ';' {
+    : LVal '=' Exp ';' {
         auto ast = new Stmt2();
         ast->lVal = unique_ptr<BaseAST>($1);
         ast->exp = unique_ptr<BaseAST>($3);
+        $$ = ast;
+    }
+    | ';' {
+        auto ast = new Stmt4();
+        ast->exp = unique_ptr<BaseAST>(nullptr);
+        $$ = ast;
+    }
+    | Exp ';' {
+        auto ast = new Stmt4();
+        ast->exp = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    | Block {
+        auto ast = new Stmt3();
+        ast->block = unique_ptr<BaseAST>($1);
+        $$ = ast;
+    }
+    | RETURN ';' {
+        auto ast = new Stmt1();
+        ast->exp = unique_ptr<BaseAST>(nullptr);
+        $$ = ast;
+    }
+    | RETURN Exp ';' {
+        auto ast = new Stmt1();
+        ast->exp = unique_ptr<BaseAST>($2);
         $$ = ast;
     }
     ;

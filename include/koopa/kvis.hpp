@@ -1,41 +1,41 @@
 #pragma once
 #include "block/func_mem_manager.hpp"
-#include"koopa.h"
+#include "koopa.h"
+#include "previs.hpp"
 #include "print.hpp"
 #include "register.hpp"
-#include "previs.hpp"
-#include<assert.h>
-#include<iostream>
+#include <assert.h>
+#include <iostream>
 
 #define toull(x) ((unsigned long long)(&x))
-void Visit(const koopa_raw_program_t&);
-void Visit(const koopa_raw_slice_t&);
-void Visit(const koopa_raw_function_t&);
-void Visit(const koopa_raw_basic_block_t&);
-void Visit(const koopa_raw_value_t&);
-void Visit(const koopa_raw_integer_t&);
-void Visit(const koopa_raw_aggregate_t&);
-void Visit(const koopa_raw_func_arg_ref_t&);
-void Visit(const koopa_raw_block_arg_ref_t&);
-void Visit(const koopa_raw_global_alloc_t&);
-void Visit(const koopa_raw_load_t&);
-void Visit(const koopa_raw_store_t&);
-void Visit(const koopa_raw_get_ptr_t&);
-void Visit(const koopa_raw_get_elem_ptr_t&);
-void Visit(const koopa_raw_binary_t&);
-void Visit(const koopa_raw_branch_t&);
-void Visit(const koopa_raw_jump_t&);
-void Visit(const koopa_raw_call_t&);
-void Visit(const koopa_raw_return_t&);
+void Visit(const koopa_raw_program_t &);
+void Visit(const koopa_raw_slice_t &);
+void Visit(const koopa_raw_function_t &);
+void Visit(const koopa_raw_basic_block_t &);
+void Visit(const koopa_raw_value_t &);
+void Visit(const koopa_raw_integer_t &);
+void Visit(const koopa_raw_aggregate_t &);
+void Visit(const koopa_raw_func_arg_ref_t &);
+void Visit(const koopa_raw_block_arg_ref_t &);
+void Visit(const koopa_raw_global_alloc_t &);
+void Visit(const koopa_raw_load_t &);
+void Visit(const koopa_raw_store_t &);
+void Visit(const koopa_raw_get_ptr_t &);
+void Visit(const koopa_raw_get_elem_ptr_t &);
+void Visit(const koopa_raw_binary_t &);
+void Visit(const koopa_raw_branch_t &);
+void Visit(const koopa_raw_jump_t &);
+void Visit(const koopa_raw_call_t &);
+void Visit(const koopa_raw_return_t &);
 
 TempRegister t_reg;
 FuncMemManager sp_allocer;
 std::string cur_func_end;
-void Visit(const koopa_raw_program_t &program) {
-// 访问所有全局变量
+void Visit(const koopa_raw_program_t &program)
+{
+    // 访问所有全局变量
     Visit(program.values);
-    Line(".text");
-    Line(".global main");
+    FrontLine(".text");
     // 访问所有函数
     Visit(program.funcs);
 }
@@ -47,11 +47,14 @@ struct instrution_name
 } iname;
 
 // 访问 raw slice
-void Visit(const koopa_raw_slice_t &slice) {
-    for (size_t i = 0; i < slice.len; ++i) {
+void Visit(const koopa_raw_slice_t &slice)
+{
+    for (size_t i = 0; i < slice.len; ++i)
+    {
         auto ptr = slice.buffer[i];
         // 根据 slice 的 kind 决定将 ptr 视作何种元素
-        switch (slice.kind) {
+        switch (slice.kind)
+        {
         case KOOPA_RSIK_FUNCTION:
             // 访问函数
             Visit(reinterpret_cast<koopa_raw_function_t>(ptr));
@@ -70,104 +73,122 @@ void Visit(const koopa_raw_slice_t &slice) {
         }
     }
 }
-auto func_prologue() {
+auto func_prologue()
+{
     std::string epilogue;
     size_t sp = sp_allocer.var_num();
     Line("addi sp, sp, ", -(long long)sp * 4);
     auto it = sp_allocer.begin();
-    while (it != sp_allocer.end()) {
+    while (it != sp_allocer.end())
+    {
         auto arg = it->first + ", " + sp_allocer.sp_address(it->first);
         Line("lw ", arg);
-        if (it->first != "a0") {
-            epilogue += "sw " + arg + "\n";
+        if (it->first != "a0")
+        {
+            epilogue += "    sw " + arg + "\n";
         }
         ++it;
     }
-    epilogue += "addi sp, sp, " + std::to_string(sp * 4) + "\nret\n";
-    return epilogue; 
+    epilogue += "    addi sp, sp, " + std::to_string(sp * 4) + "\n    ret\n";
+    return epilogue;
 }
 // 访问函数
-void Visit(const koopa_raw_function_t &func) {
-// prologue
-    Line(func->name + 1, ":");
+void Visit(const koopa_raw_function_t &func)
+{
+    FrontLine(".global ", func->name + 1);
+    // prologue
+    FrontLine(func->name + 1, ":");
     cur_func_end = std::string(func->name + 1) + "_end";
 
-    auto info = pre_visit(func);    
+    auto info = pre_visit(func);
     sp_allocer.init(info.stack_mem_count, info.call);
     auto epilogue = func_prologue();
     Line("");
 
-// 访问所有基本块
+    // 访问所有基本块
     Visit(func->bbs);
 
-// epilogue
-    Line(cur_func_end, ":");
+    // epilogue
+    FrontLine(cur_func_end, ":");
     Out(epilogue);
 }
 
 // 访问基本块
-void Visit(const koopa_raw_basic_block_t &bb) {
+void Visit(const koopa_raw_basic_block_t &bb)
+{
     // 访问所有指令
     Visit(bb->insts);
 }
 
 // 访问指令
-void Visit(const koopa_raw_value_t &value) {
-// 根据指令类型判断后续需要如何访问
+void Visit(const koopa_raw_value_t &value)
+{
+    // 根据指令类型判断后续需要如何访问
     const auto &kind = value->kind;
     iname.has = value->name;
-    if (value->name) {
+    if (value->name)
+    {
         iname.name = std::string(value->name);
     }
-    switch (kind.tag) {
-        case KOOPA_RVT_RETURN:
+    switch (kind.tag)
+    {
+    case KOOPA_RVT_RETURN:
         // 访问 return 指令
-            Visit(kind.data.ret);
-            break;
-        case KOOPA_RVT_INTEGER:
+        Visit(kind.data.ret);
+        break;
+    case KOOPA_RVT_INTEGER:
         // 访问 integer 指令
-            Visit(kind.data.integer);
-            break;
-        // 访问 二元运算符
-        case KOOPA_RVT_BINARY:
-            Visit(kind.data.binary);
-            break;
-        case KOOPA_RVT_ALLOC:
-            Visit(kind.data.global_alloc);
-            break;
-        case KOOPA_RVT_LOAD:
-            Visit(kind.data.load);
-            break;
-        case KOOPA_RVT_STORE:
-            Visit(kind.data.store);
-            break;
-        default:
+        Visit(kind.data.integer);
+        break;
+    // 访问 二元运算符
+    case KOOPA_RVT_BINARY:
+        Visit(kind.data.binary);
+        break;
+    case KOOPA_RVT_ALLOC:
+        Visit(kind.data.global_alloc);
+        break;
+    case KOOPA_RVT_LOAD:
+        Visit(kind.data.load);
+        break;
+    case KOOPA_RVT_STORE:
+        Visit(kind.data.store);
+        break;
+    default:
         // 其他类型暂时遇不到
         // exit(1);
         assert(false);
     }
     Line("");
 }
-std::string phare_arg(const koopa_raw_value_t &arg) {
+std::string phare_arg(const koopa_raw_value_t &arg)
+{
     std::string tmp = t_reg.apply();
-    if (arg->kind.tag == KOOPA_RVT_INTEGER) {
+    if (arg->kind.tag == KOOPA_RVT_INTEGER)
+    {
         Line("li ", tmp, ", ", arg->kind.data.integer.value);
-    } else {
+    }
+    else
+    {
         Line("lw ", tmp, ", ", sp_allocer.sp_address(arg->name));
     }
     return tmp;
 }
-void Visit(const koopa_raw_return_t &ret) {
-    std::string retv = phare_arg(ret.value);
-    Line("mv a0, ", retv);
+void Visit(const koopa_raw_return_t &ret)
+{
+    if (ret.value->ty->tag != KOOPA_RTT_UNIT) {
+        std::string retv = phare_arg(ret.value);
+        Line("mv a0, ", retv);
+    }
     Line("j ", cur_func_end);
 }
 
-void Visit(const koopa_raw_integer_t &integer){
+void Visit(const koopa_raw_integer_t &integer)
+{
     Out(integer.value);
 }
 
-void Visit(const koopa_raw_binary_t &binary){
+void Visit(const koopa_raw_binary_t &binary)
+{
     auto op = binary.op;
     auto l = binary.lhs;
     auto r = binary.rhs;
@@ -239,7 +260,8 @@ void Visit(const koopa_raw_binary_t &binary){
     Line("sw ", dest, ", ", destAdr);
 }
 
-void Visit(const koopa_raw_load_t &load){
+void Visit(const koopa_raw_load_t &load)
+{
     // %0 = load @x
 
     // the address of @x on stack
@@ -251,22 +273,24 @@ void Visit(const koopa_raw_load_t &load){
     Line("lw ", value, ", ", src);
 
     // address of %0 on stack
-    auto destAdr = sp_allocer.sp_address(iname.name);
+    auto dest = sp_allocer.sp_address(iname.name);
     // restore %0 to stack
-    Line("sw ", value, ", ",  destAdr);
+    Line("sw ", value, ", ", dest);
 }
-void Visit(const koopa_raw_store_t &store){
+void Visit(const koopa_raw_store_t &store)
+{
     // store %1, @x
 
     // get the value of %1 on stack
     auto src = phare_arg(store.value);
 
     // get the address of @x
-    auto destAdr = sp_allocer.sp_address(store.dest->name);
+    auto dest= sp_allocer.sp_address(store.dest->name);
 
     // @x = %1
-    Line("sw ", src, ", ", destAdr);
+    Line("sw ", src, ", ", dest);
 }
-void Visit(const koopa_raw_global_alloc_t& alloc) {
-    return; 
+void Visit(const koopa_raw_global_alloc_t &alloc)
+{
+    // do nothing, the variable has been allocated
 }

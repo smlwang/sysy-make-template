@@ -20,24 +20,16 @@ struct FuncInfo
     }
 };
 
-
-
 FuncInfo pre_visit(const koopa_raw_function_t&);
+
 void pre_visit(const koopa_raw_slice_t&);
-void pre_visit(const koopa_raw_basic_block_t&);
 void pre_visit(const koopa_raw_value_t&);
+void pre_visit(const koopa_raw_basic_block_t&);
 void pre_visit(const koopa_raw_aggregate_t&);
 void pre_visit(const koopa_raw_func_arg_ref_t&);
 void pre_visit(const koopa_raw_block_arg_ref_t&);
-void pre_visit(const koopa_raw_global_alloc_t&);
-void pre_visit(const koopa_raw_load_t&);
 void pre_visit(const koopa_raw_get_ptr_t&);
 void pre_visit(const koopa_raw_get_elem_ptr_t&);
-void pre_visit(const koopa_raw_binary_t&);
-void pre_visit(const koopa_raw_branch_t&);
-void pre_visit(const koopa_raw_jump_t&);
-void pre_visit(const koopa_raw_call_t&);
-void pre_visit(const koopa_raw_return_t&);
 
 static FuncInfo func_info;
 static VariableCounter var_counter;

@@ -20,14 +20,19 @@ void OutSpace(T&& arg,  Arg&& ...args) {
 }
 template <typename T = const char*, typename ...Arg>
 void OutSpace(const char* op, Arg&& ...args) {
-    std::cout << op << ' ';
+    std::cout << "    " << op << ' ';
     OutSpace(std::forward<Arg>(args)...);
 }
 template <typename ...Arg>
 void Line(Arg&& ...args) {
-    Out(std::forward<Arg>(args)...);
+    Out("    ", std::forward<Arg>(args)...);
     Out('\n');
 }
 
+template <typename ...Arg>
+void FrontLine(Arg&& ...args) {
+    Out(std::forward<Arg>(args)...);
+    Out('\n');
+}
 
 #endif

@@ -42,9 +42,8 @@ class ConstDefAST : public BaseAST {
         std::string ident;
         std::unique_ptr<BaseAST> constInitVal;
         std::unique_ptr<std::string> Dump() const override {
-            assert(!symbol.has(ident));
             int val = constInitVal->Eval();
-            symbol.addConst(ident, val);
+            block_symbol.const_def(ident, val);
             return nullptr;
         }
         int Eval() const override { return 0; }
@@ -78,8 +77,7 @@ class VarDeclAST : public BaseAST {
         int Eval() const override { return 0; }
 };
 static std::string creatVar(const std::string &ident){
-    auto sym = "@" + ident;
-    symbol.addVar(ident, sym);
+    auto sym = block_symbol.var_def(ident);
     std::cout << sym << " = alloc i32\n";
     return sym;
 }

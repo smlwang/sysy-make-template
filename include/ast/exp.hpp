@@ -84,17 +84,14 @@ class LValAST : public BaseAST {
     public:
         std::string ident;
         std::unique_ptr<std::string> Dump() const override {
-            auto val = symbol.get(ident);
-            if(val.index() == symbol.CONST) 
-                return uniqptr(std::to_string(symbol.toConst(val)));
-            if(val.index() == symbol.VAR){
-                return uniqptr(symbol.toVar(val));
+            auto val = block_symbol.qruey(ident);
+            if (val.flag == SymbolTalbe::TYPE::CONST) {
+                return uniqptr(std::to_string(block_symbol.to_const(val)));
             }
-            assert(false);
-            return nullptr;
+            return uniqptr(block_symbol.to_var(val));
         }
         int Eval() const override {
-            return symbol.getConst(ident);
+            return block_symbol.to_const(block_symbol.qruey(ident));
         }
 };
 class UnaryExp1 : public BaseAST {

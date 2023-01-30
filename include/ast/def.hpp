@@ -2,8 +2,8 @@
 #include<memory>
 #include<vector>
 #include<iostream>
-#include"../tool/genId.hpp"
-#include"../tool/symbol_table.hpp"
+#include"genId.hpp"
+#include"symbol_table.hpp"
 #include<map>
 static std::map<std::string, std::string> kexp = {
     {"-", "sub"},   {"+", "add"},

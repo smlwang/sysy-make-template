@@ -3,8 +3,8 @@
 #include<cassert>
 #include<sstream>
 #include<memory>
-#include"../include/koopa.h"
-#include"../include/kvis.hpp"
+#include"../include/koopa/koopa.h"
+#include"../include//koopa/kvis.hpp"
 #include"../include/ast/ast.hpp"
 #include<string>
 using namespace std;

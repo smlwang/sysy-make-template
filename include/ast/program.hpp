@@ -1,4 +1,5 @@
 #pragma once
+#include "branch_id.hpp"
 #include"def.hpp"
 // CompUnit  ::= FuncDef;
 
@@ -53,6 +54,7 @@ class BlockAST : public BaseAST {
             block_symbol.step_in_block();
             if (block_symbol.depth() == 1) {
                 Line("{");
+                Line("");
                 LabelOut("%entry");
                 rets.in();
             }
@@ -104,6 +106,7 @@ class Stmt2 : public BaseAST {
         std::unique_ptr<BaseAST> lVal;
         std::unique_ptr<BaseAST> exp;
         std::unique_ptr<std::string> Dump() const override {
+            if (rets.retruned()) return nullptr;
             auto lef = lVal->Dump();
             auto rig = exp->Dump();
             TextLine("store ", *rig, ", ", *lef);
@@ -116,6 +119,7 @@ class Stmt3 : public BaseAST {
     public:
         std::unique_ptr<BaseAST> block;
         std::unique_ptr<std::string> Dump() const override {
+            if (rets.retruned()) return nullptr;
             if (block != nullptr) block->Dump();
             return nullptr;
         }
@@ -125,6 +129,7 @@ class Stmt4 : public BaseAST {
     public:
         std::unique_ptr<BaseAST> exp;
         std::unique_ptr<std::string> Dump() const override {
+            if (rets.retruned()) return nullptr;
             if (exp != nullptr) exp->Dump();
             return nullptr;
         }
@@ -143,20 +148,22 @@ class Stmt5 : public BaseAST {
         std::unique_ptr<BaseAST> exp;
         std::unique_ptr<BaseAST> stmt;
         std::unique_ptr<std::string> Dump() const override {
+            if (rets.retruned()) return nullptr;
             bid.new_branch(BranchIdGenerator::IF);
             auto e = *exp->Dump();
 
             TextLine("br ", e, ", ", bid.bthen(), ", ", bid.bend());
-            Line("");
 
+            Line("");
             LabelOut(bid.bthen());
             rets.in();
             stmt->Dump();
             if (!rets.retruned()) TextLine("jump ", bid.bend());
             rets.out();
-            Line("");
 
+            Line("");
             LabelOut(bid.bend());
+            rets.in();
             bid.end_branch();
             return nullptr;
         }
@@ -169,28 +176,95 @@ class Stmt6 : public BaseAST {
         std::unique_ptr<BaseAST> stmt;
         std::unique_ptr<BaseAST> estmt;
         std::unique_ptr<std::string> Dump() const override {
+            if (rets.retruned()) return nullptr;
             bid.new_branch(BranchIdGenerator::IF);
             auto e = *exp->Dump();
-
+            rets.ret();
             TextLine("br ", e, ", ", bid.bthen(), ", ", bid.belse());
-            Line("");
 
+            Line("");
             LabelOut(bid.bthen());
             rets.in();
             stmt->Dump();
             if (!rets.retruned()) TextLine("jump ", bid.bend());
             rets.out();
-            Line("");
 
+            Line("");
             LabelOut(bid.belse());
             rets.in();
             estmt->Dump();
             if (!rets.retruned()) TextLine("jump ", bid.bend());
             rets.out();
-            Line("");
 
+            Line("");
             LabelOut(bid.bend());
 
+            rets.in();
+            bid.end_branch();
+            return nullptr;
+        }
+        int Eval() const override { return 0; }
+};
+
+
+class Break : public BaseAST {
+    public:
+        std::unique_ptr<std::string> Dump() const override {
+            if (!rets.retruned()) {
+                rets.ret();
+                TextLine("jump ", bid.loop_end());
+            }
+            return nullptr;
+        }
+        int Eval() const override { return 0; }
+};
+class Continue : public BaseAST {
+    public:
+        std::unique_ptr<std::string> Dump() const override {
+            if (!rets.retruned()) {
+                rets.ret();
+                TextLine("jump ", bid.loop_cond());
+            }
+            return nullptr;
+        }
+        int Eval() const override { return 0; }
+};
+
+class While : public BaseAST {
+    public:
+        std::unique_ptr<BaseAST> exp;
+        std::unique_ptr<BaseAST> stmt;
+        std::unique_ptr<std::string> Dump() const override {
+            if (rets.retruned()) return nullptr;
+            bid.new_branch(BranchIdGenerator::WHILE);
+            rets.ret();
+            TextLine("jump ", bid.loop_cond());
+            Line("");
+            LabelOut(bid.loop_cond());
+            rets.in();
+            auto cond = *exp->Dump();
+            if (cond[0] == '@') {
+                auto t = irid.next();
+                TextLine(t, " = load ", cond);
+                cond = t;
+            }
+            if (!rets.retruned()) {
+                TextLine("br ", cond, ", ", bid.loop_start(), ", ", bid.loop_end());
+            }
+            rets.out();
+
+            Line("");
+            LabelOut(bid.loop_start());
+            rets.in();
+            stmt->Dump();
+            if (!rets.retruned()) {
+                TextLine("jump ", bid.loop_cond());
+            }
+            rets.out();
+
+            Line("");
+            LabelOut(bid.loop_end());
+            rets.in();
             bid.end_branch();
             return nullptr;
         }

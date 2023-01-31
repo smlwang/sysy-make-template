@@ -23,6 +23,7 @@
     std::vector<BaseAST*> *arr_val;
 }
 %token INT RETURN CONST IF ELSE
+%token WHILE CONTINUE BREAK
 %token <str_val> IDENT MUL ADD EQ REL LAND LOR
 %token <int_val> INT_CONST
 
@@ -134,6 +135,20 @@ Stmt
         ast->exp = unique_ptr<BaseAST>($3);
         ast->stmt = unique_ptr<BaseAST>($5);
         ast->estmt = unique_ptr<BaseAST>($7);
+        $$ = ast;
+    }
+    | WHILE '(' Exp ')' Stmt {
+        auto ast = new While();
+        ast->exp = unique_ptr<BaseAST>($3);
+        ast->stmt = unique_ptr<BaseAST>($5);
+        $$ = ast;
+    }
+    | BREAK {
+        auto ast = new Break();
+        $$ = ast;
+    }
+    | CONTINUE {
+        auto ast = new Continue();
         $$ = ast;
     }
     ;

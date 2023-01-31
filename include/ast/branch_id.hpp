@@ -1,6 +1,7 @@
 #ifndef _AST_BRANCH_ID_HPP
 #define _AST_BRANCH_ID_HPP
 #include <string>
+#include <cassert>
 #include <vector>
 class BranchIdGenerator
 {
@@ -9,7 +10,6 @@ public:
     {
         IF,
         WHILE,
-        FOR,
         LAND,
         LOR,
     };
@@ -45,8 +45,6 @@ public:
             return "%and" + std::to_string(_cur_no) + "_then";
         case LOR:
             return "%or" + std::to_string(_cur_no) + "_then";
-        case FOR:
-        case WHILE:
         default:
             break;
         }
@@ -61,8 +59,6 @@ public:
             return "%if" + std::to_string(_cur_no) + "_else";
         case LAND:
         case LOR:
-        case FOR:
-        case WHILE:
         default:
             break;
         }
@@ -79,8 +75,6 @@ public:
             return "%and" + std::to_string(_cur_no) + "_end";
         case LOR:
             return "%or" + std::to_string(_cur_no) + "_end";
-        case FOR:
-        case WHILE:
         default:
             break;
         }
@@ -97,11 +91,33 @@ public:
         case LAND:
             return "@and" + std::to_string(_cur_no);
             break;
-
         default:
             break;
         }
         return "";
+    }
+    int find_loop() const {
+        for (int i = _delc.size() - 1; i >= 0; i--) {
+            if (_delc[i].ty == WHILE) {
+                return _delc[i]._no;
+            }
+        }
+        return -1;
+    }
+    std::string loop_cond() const {
+        auto _cur_no = find_loop();
+        assert(~_cur_no);
+        return "%loop" + std::to_string(_cur_no) + "_cond";
+    }
+    std::string loop_start() const {
+        auto _cur_no = find_loop();
+        assert(~_cur_no);
+        return "%loop" + std::to_string(_cur_no) + "_start";
+    }
+    std::string loop_end() const {
+        auto _cur_no = find_loop();
+        assert(~_cur_no);
+        return "%loop" + std::to_string(_cur_no) + "_end";
     }
 };
 #endif

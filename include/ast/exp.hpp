@@ -15,8 +15,7 @@ static std::unique_ptr<std::string> thrOp(const std::unique_ptr<BaseAST> &l,\
         auto rig1 = l->Dump();
         auto rig2 = r->Dump();
         auto lef = irid.next();
-        std::cout << lef << " = " << kexp[op] << " ";
-        std::cout << (*rig1) << ", " << (*rig2) << "\n"; 
+        TextLine(lef, " = ", kexp[op], " ", *rig1, ", ", *rig2);
         return uniqptr(lef);
 }
 static int eval(const std::unique_ptr<BaseAST> &l,\
@@ -35,13 +34,16 @@ static int eval(const std::unique_ptr<BaseAST> &l,\
         else if(op == "<") return a < b;
         else if(op == ">=") return a >= b;
         else if(op == ">") return a > b;
+        else if (op == "&&") return a && b;
+        else if (op == "||") return a || b;
         return -1;
 }
 class ExpAST : public BaseAST {
     public:
         std::unique_ptr<BaseAST> lOrExp;
         std::unique_ptr<std::string> Dump() const override {
-           return lOrExp->Dump();
+            return lOrExp->Dump();
+            Line("");
         }
         int Eval() const override {
             return lOrExp->Eval();
@@ -112,13 +114,14 @@ class UnaryExp2 : public BaseAST {
             if(unaryOp == "+") return unaryExp->Dump();
             auto rig = unaryExp->Dump();
             auto lef = irid.next();
-            std::cout << lef << " = ";
+            std::string alter = lef + " = ";
             if(unaryOp == "!"){
-                std::cout << "eq 0, "; 
+                alter += "eq 0, ";
             }else if(unaryOp == "-"){
-                std::cout << "sub 0, "; 
+                alter += "sub 0, ";
             }
-            std::cout << (*rig) << "\n";
+            alter += *rig;
+            TextLine(alter);
             return std::unique_ptr<std::string>(new std::string(lef));            
         }
         int Eval() const override {
@@ -232,15 +235,33 @@ class LAndExp2 : public BaseAST {
         std::unique_ptr<BaseAST> lAndExp;
         std::unique_ptr<BaseAST> eqExp;
         std::unique_ptr<std::string> Dump() const override {
+            bid.new_branch(BranchIdGenerator::LAND);
+            auto res = bid.alloc();
+            TextLine(res, " = alloc i32");
+
+            // lhs
             auto rig1 = lAndExp->Dump();
+            auto tmp = irid.next();
+            TextLine(tmp, " = ne 0, ", *rig1);
+            TextLine("store ", tmp, ", ", res);
+            TextLine("br ", tmp, ", ", bid.bthen(), ", ", bid.bend());
+            Line("");
+
+            // rhs
+            LabelOut(bid.bthen());
             auto rig2 = eqExp->Dump();
-            auto lef1 = irid.next();
-            std::cout << lef1 << " = ne 0, " << (*rig1) << "\n";
-            auto lef2 = irid.next();
-            std::cout << lef2 << " = ne 0, " << (*rig2) << "\n";
-            auto lef3 = irid.next();
-            std::cout << lef3 << " = and " << lef1 << ", " << lef2 << "\n";
-            return std::unique_ptr<std::string>(new std::string(lef3));
+            tmp = irid.next();
+            TextLine(tmp, " = ne 0, ", *rig2);
+            TextLine("store ", tmp, ", ", res);
+            TextLine("jump ", bid.bend());
+            Line("");
+
+            LabelOut(bid.bend());
+            bid.end_branch();
+            auto t = irid.next();
+            TextLine(t, " = load ", res);
+            res = t;
+            return uniqptr(res);
         }
         int Eval() const override {
             return (lAndExp->Eval()) && (eqExp->Eval());
@@ -261,10 +282,34 @@ class LOrExp2 : public BaseAST {
         std::unique_ptr<BaseAST> lAndExp1;
         std::unique_ptr<BaseAST> lAndExp2;
         std::unique_ptr<std::string> Dump() const override {
-            auto rig = *thrOp(lAndExp1, lAndExp2, "|");
-            auto lef = irid.next();
-            std::cout << lef << " = ne 0, " << rig << "\n";
-            return std::unique_ptr<std::string>(new std::string(lef));
+            bid.new_branch(BranchIdGenerator::LOR);
+            auto res = bid.alloc();
+            TextLine(res, " = alloc i32");
+
+            // lhs
+            auto rig1 = lAndExp1->Dump();
+            auto tmp = irid.next();
+            TextLine(tmp, " = ne 0, ", *rig1);
+            TextLine("store ", tmp, ", ", res);
+            TextLine("br ", tmp, ", ", bid.bend(), ", ", bid.bthen());
+            Line("");
+
+            // rhs
+            LabelOut(bid.bthen());
+            auto rig2 = lAndExp2->Dump();
+            tmp = irid.next();
+            TextLine(tmp, " = ne 0, ", *rig2);
+            TextLine("store ", tmp, ", ", res);
+            TextLine("jump ", bid.bend());
+            Line("");
+
+            LabelOut(bid.bend());
+            
+            auto t = irid.next();
+            TextLine(t, " = load ", res);
+            res = t;
+            bid.end_branch();
+            return uniqptr(res);
         }
         int Eval() const override {
             return (lAndExp1->Eval()) || (lAndExp2->Eval());

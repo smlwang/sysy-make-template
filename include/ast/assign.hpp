@@ -78,7 +78,7 @@ class VarDeclAST : public BaseAST {
 };
 static std::string creatVar(const std::string &ident){
     auto sym = block_symbol.var_def(ident);
-    std::cout << sym << " = alloc i32\n";
+    TextLine(sym, " = alloc i32");
     return sym;
 }
 class VarDef1 : public BaseAST {
@@ -88,7 +88,7 @@ class VarDef1 : public BaseAST {
         std::unique_ptr<std::string> Dump() const override {
             auto rig = initVal->Dump();
             auto lef = creatVar(ident);
-            std::cout << "store " << (*rig) << ", " << lef << "\n";
+            TextLine("store ", *rig, ", ", lef);
             return nullptr;
         }
         int Eval() const override { return 0; }

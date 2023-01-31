@@ -22,7 +22,7 @@
     BaseAST *ast_val;
     std::vector<BaseAST*> *arr_val;
 }
-%token INT RETURN CONST
+%token INT RETURN CONST IF ELSE
 %token <str_val> IDENT MUL ADD EQ REL LAND LOR
 %token <int_val> INT_CONST
 
@@ -115,13 +115,25 @@ Stmt
         $$ = ast;
     }
     | RETURN ';' {
-        auto ast = new Stmt1();
-        ast->exp = unique_ptr<BaseAST>(nullptr);
+        auto ast = new StmtNull();
         $$ = ast;
     }
     | RETURN Exp ';' {
         auto ast = new Stmt1();
         ast->exp = unique_ptr<BaseAST>($2);
+        $$ = ast;
+    }
+    | IF '(' Exp ')' Stmt {
+        auto ast = new Stmt5();
+        ast->exp = unique_ptr<BaseAST>($3);
+        ast->stmt = unique_ptr<BaseAST>($5);
+        $$ = ast;
+    }
+    | IF '(' Exp ')' Stmt ELSE Stmt {
+        auto ast = new Stmt6();
+        ast->exp = unique_ptr<BaseAST>($3);
+        ast->stmt = unique_ptr<BaseAST>($5);
+        ast->estmt = unique_ptr<BaseAST>($7);
         $$ = ast;
     }
     ;

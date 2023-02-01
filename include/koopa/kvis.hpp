@@ -4,8 +4,9 @@
 #include "koopa.h"
 #include "previs.hpp"
 #include "register.hpp"
-#include <assert.h>
+#include <cassert>
 #include <iostream>
+#include <algorithm>
 
 #define toull(x) ((unsigned long long)(&x))
 void Visit(const koopa_raw_program_t &);
@@ -32,10 +33,11 @@ TempRegister t_reg;
 FuncMemManager sp_allocer;
 std::map<std::string, bool> vis;
 std::string cur_func_end;
+
+static bool has_return;
 void Visit(const koopa_raw_program_t &program) {
     // 访问所有全局变量
     Visit(program.values);
-    Line(".text");
     // 访问所有函数
     Visit(program.funcs);
 }
@@ -45,6 +47,15 @@ struct instrution_name {
     bool has;
 } iname;
 
+std::string phare_arg(const koopa_raw_value_t &arg) {
+    std::string tmp = t_reg.apply();
+    if (arg->kind.tag == KOOPA_RVT_INTEGER) {
+        TextLine("li ", tmp, ", ", arg->kind.data.integer.value);
+    } else {
+        TextLine("lw ", tmp, ", ", sp_allocer.sp_address(arg->name));
+    }
+    return tmp;
+}
 // 访问 raw slice
 void Visit(const koopa_raw_slice_t &slice) {
     for (size_t i = 0; i < slice.len; ++i) {
@@ -69,32 +80,30 @@ void Visit(const koopa_raw_slice_t &slice) {
         }
     }
 }
-auto func_prologue() {
-    std::string epilogue;
-    size_t sp = sp_allocer.var_num();
-    TextLine("addi sp, sp, ", -(long long)sp * 4);
-    auto it = sp_allocer.begin();
-    while (it != sp_allocer.end()) {
-        auto arg = it->first + ", " + sp_allocer.sp_address(it->first);
-        TextLine("lw ", arg);
-        if (it->first != "a0") {
-            epilogue += "    sw " + arg + "\n";
-        }
-        ++it;
+std::vector<std::string> get_func_param(const koopa_raw_slice_t &slice) {
+    std::vector<std::string> params;
+    for (size_t i = 0; i < slice.len; ++i) {
+        auto ptr = slice.buffer[i];
+        auto alter = reinterpret_cast<koopa_raw_value_t>(ptr);
+        params.push_back(alter->name);
     }
-    epilogue += "    addi sp, sp, " + std::to_string(sp * 4) + "\n    ret\n";
-    return epilogue;
+    return params;
 }
 // 访问函数
 void Visit(const koopa_raw_function_t &func) {
-    Line(".global ", func->name + 1);
+    if (func->bbs.len == 0) return;
+    TextLine(".text");
+    TextLine(".globl ", func->name + 1);
     // prologue
     Line(func->name + 1, ":");
     cur_func_end = std::string(func->name + 1) + "_end";
-
     auto info = pre_visit(func);
-    sp_allocer.init(info.stack_mem_count, info.call);
-    auto epilogue = func_prologue();
+    std::vector<std::string> params = get_func_param(func->params);
+    sp_allocer = FuncMemManager(info); 
+    auto prologues = sp_allocer.prologue(params);
+    for (auto v : prologues) {
+        TextLine(v);
+    }
     Line("");
 
     // 访问所有基本块
@@ -102,14 +111,20 @@ void Visit(const koopa_raw_function_t &func) {
 
     // epilogue
     LabelOut(cur_func_end);
-    Out(epilogue);
+    auto epilogues = sp_allocer.epilogue();
+    for (auto v : epilogues) {
+        TextLine(v);
+    }
+    Line("");
 }
 
 // 访问基本块
 void Visit(const koopa_raw_basic_block_t &bb) {
-    if (vis[bb->name])
+    if (bb->insts.len == 0) return;
+    if (vis[std::string(bb->name)])
         return;
-    vis[bb->name] = 1;
+    if (std::string(bb->name + 1) != "entry")
+        vis[bb->name] = 1;
     // 访问所有指令
     Visit(bb->insts);
 }
@@ -155,25 +170,32 @@ void Visit(const koopa_raw_value_t &value) {
     case KOOPA_RVT_JUMP:
         Visit(kind.data.jump);
         break;
+    case KOOPA_RVT_CALL:
+        if (value->name) has_return = true;
+        Visit(kind.data.call);
+        has_return = false;
+        break;
+    case KOOPA_RVT_GLOBAL_ALLOC:
+        Visit(kind.data.global_alloc);
+        break;
     default:
         // 其他类型暂时遇不到
         // exit(1);
         assert(false);
     }
 }
-std::string phare_arg(const koopa_raw_value_t &arg) {
-    std::string tmp = t_reg.apply();
-    if (arg->kind.tag == KOOPA_RVT_INTEGER) {
-        TextLine("li ", tmp, ", ", arg->kind.data.integer.value);
-    } else {
-        TextLine("lw ", tmp, ", ", sp_allocer.sp_address(arg->name));
-    }
-    return tmp;
-}
 void Visit(const koopa_raw_return_t &ret) {
+    if (!ret.value) {
+        TextLine("j ", cur_func_end);
+        return;
+    }
     if (ret.value->ty->tag != KOOPA_RTT_UNIT) {
-        std::string retv = phare_arg(ret.value);
-        TextLine("mv a0, ", retv);
+        if (ret.value->kind.tag == KOOPA_RVT_INTEGER) {
+            TextLine("li a0, ", ret.value->kind.data.integer.value);
+        } else {
+            std::string retv = phare_arg(ret.value);
+            TextLine("mv a0, ", retv);
+        }
     }
     TextLine("j ", cur_func_end);
 }
@@ -267,6 +289,7 @@ void Visit(const koopa_raw_load_t &load) {
     // restore %0 to stack
     TextLine("sw ", value, ", ", dest);
 }
+
 void Visit(const koopa_raw_store_t &store) {
     // store %1, @x
 
@@ -309,4 +332,35 @@ void Visit(const koopa_raw_jump_t &jump) {
     Line("");
     LabelOut(jump.target->name + 1);
     Visit(jump.target->insts);
+}
+
+void deal_call_param(const koopa_raw_slice_t& slice, int idx) {
+    auto ptr = slice.buffer[idx];
+    auto alter = reinterpret_cast<koopa_raw_value_t>(ptr);
+    if (alter->kind.tag == KOOPA_RVT_INTEGER) {
+        int p = alter->kind.data.integer.value;
+        if (idx < 8) {
+            TextLine("li a",  idx, ", ", p);
+        } else {
+            TextLine("li t0, ", p);
+            TextLine("sw t0, ", sp_allocer.sp_args(idx));
+        }
+    } else {
+        if (idx < 8) {
+            TextLine("lw a", idx, ", ", sp_allocer.sp_address(alter->name));
+        } else {
+            TextLine("lw t0, ", sp_allocer.sp_address(alter->name));
+            TextLine("sw t0, ", sp_allocer.sp_args(idx));
+        }
+    }
+}
+void Visit(const koopa_raw_call_t &call) {
+    int len = call.args.len;
+    for (int i = 0; i < len; i++) {
+        deal_call_param(call.args, i); 
+    }
+    TextLine("call ", call.callee->name + 1);
+    if (has_return) {
+        TextLine("sw a0, ", sp_allocer.sp_address(iname.name));
+    }
 }

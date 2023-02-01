@@ -1,23 +1,12 @@
 #pragma once
 #include "../fmt/print.hpp"
 #include "block/variable.hpp"
+#include "block/func_mem_manager.hpp"
 #include "koopa.h"
 #include "register.hpp"
 #include <assert.h>
 #include <iostream>
-
-struct FuncInfo {
-    // whether this function will call another function or not
-    bool call;
-
-    // count the memory of variables need to alloc on the function frame
-    size_t stack_mem_count;
-
-    void init() {
-        call = false;
-        stack_mem_count = 0;
-    }
-};
+#include <algorithm>
 
 FuncInfo pre_visit(const koopa_raw_function_t &);
 
@@ -40,7 +29,7 @@ static void pre_init() {
 // 访问函数
 FuncInfo pre_visit(const koopa_raw_function_t &func) {
     pre_init();
-
+    func_info.self_args = func->params.len;
     // 访问所有基本块
     pre_visit(func->bbs);
 
@@ -78,6 +67,10 @@ void pre_visit(const koopa_raw_basic_block_t &bb) {
 // 访问指令
 void pre_visit(const koopa_raw_value_t &value) {
     // 根据指令类型判断后续需要如何访问
+    if (value->kind.tag == KOOPA_RVT_CALL) {
+        func_info.call = true;
+        func_info.max_cal_args = std::max(func_info.max_cal_args, (size_t)(value->kind.data.call.args.len));
+    }
     if (value->name) {
         var_counter.insert(value->name);
     }

@@ -45,11 +45,4 @@ public:
     virtual std::unique_ptr<std::string> Dump() const = 0;
     virtual int Eval() const = 0;
 };
-
-// static void ir_init() {
-//     funcType["getint"] = 1;
-//     funcType["getch"] = 1;
-//     funcType["getarray"] = 1;
-//     block_symbol.step_in_block();
-// }
 #endif

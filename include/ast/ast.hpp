@@ -1,6 +1,7 @@
 #pragma once
-#include "assign.hpp"
 #include "def.hpp"
+
+// ast file
+#include "assign.hpp"
 #include "exp.hpp"
-#include "../fmt/print.hpp"
 #include "program.hpp"

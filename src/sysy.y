@@ -20,42 +20,105 @@
     std::string *str_val;
     int int_val;
     BaseAST *ast_val;
+    std::vector<std::string *> *arr_str;
     std::vector<BaseAST*> *arr_val;
 }
-%token INT RETURN CONST IF ELSE
+%token INT VOID RETURN CONST IF ELSE
 %token WHILE CONTINUE BREAK
 %token <str_val> IDENT MUL ADD EQ REL LAND LOR
 %token <int_val> INT_CONST
 
-%type <ast_val> FuncDef FuncType Block Stmt BlockItem
+%type <ast_val> FuncDef Block Stmt BlockItem CompUnit
 %type <ast_val> Exp PrimaryExp UnaryExp AddExp MulExp LOrExp RelExp EqExp LAndExp
-%type <ast_val> Decl ConstDecl VarDecl BType ConstDef VarDef ConstExp ConstInitVal InitVal LVal
-%type <arr_val> ConstDefs VarDefs BlockItems
+%type <ast_val> Decl ConstDecl VarDecl ConstDef VarDef ConstExp ConstInitVal InitVal LVal
+%type <arr_val> ConstDefs VarDefs BlockItems FuncRParams
 %type <int_val> Number
-%type <str_val> UnaryOp
+%type <arr_str> FuncFParams 
+%type <str_val> UnaryOp FuncType FuncFParam BType 
 
 %%
 CompUnit
-    : FuncDef{
-        auto comp_unit = make_unique<CompUnitAST>();
+    : FuncDef {
+        auto comp_unit = make_unique<CompUnitFuncAST>();
         comp_unit->func_def = unique_ptr<BaseAST>($1);
+        ast = move(comp_unit);
+    }
+    | Decl {
+        auto comp_unit = make_unique<CompUnitDeclAST>();
+        comp_unit->global_def = unique_ptr<BaseAST>($1);
+        ast = move(comp_unit);
+    }
+    | CompUnit Decl {
+        auto comp_unit = make_unique<CompUnitAST>();
+        comp_unit->compUnit = move(ast);
+        auto decl = make_unique<CompUnitDeclAST>();
+        decl->global_def = unique_ptr<BaseAST>($2);
+        comp_unit->cur_def = move(decl);
+        ast = move(comp_unit);
+    }
+    | CompUnit FuncDef {
+        auto comp_unit = make_unique<CompUnitAST>();
+        comp_unit->compUnit = move(ast);
+        comp_unit->cur_def = unique_ptr<BaseAST>($2);
         ast = move(comp_unit);
     }
     ;
 FuncDef
-    : FuncType IDENT '(' ')' Block {
+    : BType IDENT '(' ')' Block {
         auto ast = new FuncDefAST();
-        ast->func_type = unique_ptr<BaseAST>($1);
+        ast->func_type = *unique_ptr<string>($1);
         ast->ident = *unique_ptr<string>($2);
+        ast->funcFParams = {};
         ast->block = unique_ptr<BaseAST>($5);
         $$ = ast;
     }
+    | BType IDENT '(' FuncFParams ')' Block {
+        auto ast = new FuncDefAST();
+        ast->func_type = *unique_ptr<string>($1);
+        ast->ident = *unique_ptr<string>($2);
+        ast->funcFParams = *unique_ptr<vector<string*>>($4);
+        ast->block = unique_ptr<BaseAST>($6);
+        $$ = ast;
+    }
+    ;
+FuncFParams
+    : FuncFParam {
+        auto arr = new vector<string*>();
+        (*arr).push_back($1);
+        $$ = arr;
+    } 
+    | FuncFParams ',' FuncFParam {
+        (*$1).push_back($3);
+        $$ = $1; 
+    }
+FuncFParam
+    : BType IDENT {
+        $$ = $2;
+    }
+    ;
+FuncRParams
+    : Exp {
+        auto arr = new vector<BaseAST*>();
+        (*arr).push_back($1);
+        $$ = arr;
+    }
+    | FuncRParams ',' Exp {
+        (*$1).push_back($3);
+        $$ = $1; 
+    }
     ;
 FuncType
+    : BType {
+        $$ = $1;
+    }
+    ;
+
+BType
     : INT {
-        auto ast = new FuncTypeAST();
-        ast->ident = *unique_ptr<string>(new string("int"));
-        $$ = ast;
+        $$ = new string("int");
+    }
+    | VOID {
+        $$ = new string("void");
     }
     ;
 Block
@@ -188,6 +251,18 @@ UnaryExp
         ast->unaryExp = unique_ptr<BaseAST>($2);
         $$ = ast;
     }
+    | IDENT '(' ')' {
+        auto ast = new UnaryExp3();
+        ast->ident = *unique_ptr<string>($1);
+        ast->funcRParams = {};
+        $$ = ast;
+    }
+    | IDENT '(' FuncRParams ')' {
+        auto ast = new UnaryExp3();
+        ast->ident = *unique_ptr<string>($1);
+        ast->funcRParams = *unique_ptr<vector<BaseAST*>>($3);
+        $$ = ast;
+    }
     ;
 UnaryOp
     : ADD {
@@ -299,7 +374,7 @@ Decl
 ConstDecl
     : CONST BType ConstDefs ';' {
         auto ast = new ConstDeclAST();
-        ast->bType = unique_ptr<BaseAST>($2);
+        ast->bType = *unique_ptr<string>($2);
         ast->constDef = *unique_ptr<vector<BaseAST*>>($3);
         $$ = ast;
     }
@@ -324,7 +399,7 @@ ConstDef
 VarDecl
     : BType VarDefs ';' {
         auto ast = new VarDeclAST();
-        ast->bType = unique_ptr<BaseAST>($1);
+        ast->bType = *unique_ptr<string>($1);
         ast->varDef = *unique_ptr<vector<BaseAST*>>($2);
         $$ = ast;
     }
@@ -378,13 +453,7 @@ ConstExp
         $$ = ast;
     }
     ;
-BType
-    : INT {
-        auto ast = new BTypeAST();
-        ast->bType = "int";
-        $$ = ast;
-    }
-    ;
+
 %%
 void yyerror(unique_ptr<BaseAST> &ast, const char *s){
     cerr << "error: " << s << endl;

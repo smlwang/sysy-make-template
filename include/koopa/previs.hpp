@@ -1,17 +1,16 @@
 #pragma once
-#include"koopa.h"
-#include "block/variable.hpp"
 #include "../fmt/print.hpp"
+#include "block/variable.hpp"
+#include "koopa.h"
 #include "register.hpp"
-#include<assert.h>
-#include<iostream>
+#include <assert.h>
+#include <iostream>
 
-struct FuncInfo
-{
+struct FuncInfo {
     // whether this function will call another function or not
     bool call;
 
-    // count the memory of variables need to alloc on the function frame 
+    // count the memory of variables need to alloc on the function frame
     size_t stack_mem_count;
 
     void init() {
@@ -20,16 +19,16 @@ struct FuncInfo
     }
 };
 
-FuncInfo pre_visit(const koopa_raw_function_t&);
+FuncInfo pre_visit(const koopa_raw_function_t &);
 
-void pre_visit(const koopa_raw_slice_t&);
-void pre_visit(const koopa_raw_value_t&);
-void pre_visit(const koopa_raw_basic_block_t&);
-void pre_visit(const koopa_raw_aggregate_t&);
-void pre_visit(const koopa_raw_func_arg_ref_t&);
-void pre_visit(const koopa_raw_block_arg_ref_t&);
-void pre_visit(const koopa_raw_get_ptr_t&);
-void pre_visit(const koopa_raw_get_elem_ptr_t&);
+void pre_visit(const koopa_raw_slice_t &);
+void pre_visit(const koopa_raw_value_t &);
+void pre_visit(const koopa_raw_basic_block_t &);
+void pre_visit(const koopa_raw_aggregate_t &);
+void pre_visit(const koopa_raw_func_arg_ref_t &);
+void pre_visit(const koopa_raw_block_arg_ref_t &);
+void pre_visit(const koopa_raw_get_ptr_t &);
+void pre_visit(const koopa_raw_get_elem_ptr_t &);
 
 static FuncInfo func_info;
 static VariableCounter var_counter;
@@ -42,7 +41,7 @@ static void pre_init() {
 FuncInfo pre_visit(const koopa_raw_function_t &func) {
     pre_init();
 
-// 访问所有基本块
+    // 访问所有基本块
     pre_visit(func->bbs);
 
     func_info.stack_mem_count = var_counter.var_num();
@@ -70,7 +69,6 @@ void pre_visit(const koopa_raw_slice_t &slice) {
     }
 }
 
-
 // 访问基本块
 void pre_visit(const koopa_raw_basic_block_t &bb) {
     // 访问所有指令
@@ -79,7 +77,7 @@ void pre_visit(const koopa_raw_basic_block_t &bb) {
 
 // 访问指令
 void pre_visit(const koopa_raw_value_t &value) {
-// 根据指令类型判断后续需要如何访问
+    // 根据指令类型判断后续需要如何访问
     if (value->name) {
         var_counter.insert(value->name);
     }

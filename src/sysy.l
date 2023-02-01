@@ -31,6 +31,7 @@ LOrOp                   \|\|
 {LineComment}           {}
 {BlockComment}          {}
 "int"                   {return INT;}
+"void"                  {return VOID;}
 "return"                {return RETURN;}
 "const"                 {return CONST;}
 "if"                    {return IF;}

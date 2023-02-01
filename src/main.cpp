@@ -1,19 +1,20 @@
-#include<iostream>
-#include<cstdio>
-#include<cassert>
-#include<sstream>
-#include<memory>
-#include"../include/koopa/koopa.h"
-#include"../include//koopa/kvis.hpp"
-#include"../include/ast/ast.hpp"
-#include<string>
+#include "../include//koopa/kvis.hpp"
+#include "../include/ast/ast.hpp"
+#include "../include/koopa/koopa.h"
+#include <cassert>
+#include <cstdio>
+#include <iostream>
+#include <memory>
+#include <sstream>
+#include <string>
 using namespace std;
 
 extern FILE *yyin;
 extern int yyparse(unique_ptr<BaseAST> &ast);
-void dealIR(const stringstream &buf){
+void dealIR(const stringstream &buf) {
     koopa_program_t program;
-    koopa_error_code_t ret = koopa_parse_from_string(buf.str().c_str(), &program);
+    koopa_error_code_t ret =
+        koopa_parse_from_string(buf.str().c_str(), &program);
     std::cout << std::endl;
     assert(ret == KOOPA_EC_SUCCESS);
     koopa_raw_program_builder_t builder = koopa_new_raw_program_builder();
@@ -22,8 +23,7 @@ void dealIR(const stringstream &buf){
     Visit(raw);
     koopa_delete_raw_program_builder(builder);
 }
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]) {
     assert(argc == 5);
     auto mod = argv[1];
     auto input = argv[2];
@@ -38,10 +38,13 @@ int main(int argc, char const *argv[])
     cout << string(mod);
     freopen(output, "w", stdout);
     stringstream buf;
-    streambuf *old = cout.rdbuf(buf.rdbuf()); 
+    streambuf *old = cout.rdbuf(buf.rdbuf());
+    cout << "decl @getint(): i32\ndecl @getch(): i32\ndecl @getarray(*i32): "
+            "i32\ndecl @putint(i32)\ndecl @putch(i32)\ndecl @putarray(i32, "
+            "*i32)\ndecl @starttime()\ndecl @stoptime()\n\n";
     ast->Dump();
     cout.rdbuf(old);
-    if(string(mod) == "-koopa"s){
+    if (string(mod) == "-koopa"s) {
         cout << buf.str() << endl;
         return 0;
     }

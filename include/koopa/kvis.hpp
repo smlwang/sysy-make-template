@@ -1,8 +1,8 @@
 #pragma once
+#include "../fmt/print.hpp"
 #include "block/func_mem_manager.hpp"
 #include "koopa.h"
 #include "previs.hpp"
-#include "../fmt/print.hpp"
 #include "register.hpp"
 #include <assert.h>
 #include <iostream>
@@ -30,10 +30,9 @@ void Visit(const koopa_raw_return_t &);
 
 TempRegister t_reg;
 FuncMemManager sp_allocer;
-std::map<std::string, bool> vis; 
+std::map<std::string, bool> vis;
 std::string cur_func_end;
-void Visit(const koopa_raw_program_t &program)
-{
+void Visit(const koopa_raw_program_t &program) {
     // 访问所有全局变量
     Visit(program.values);
     Line(".text");
@@ -41,21 +40,17 @@ void Visit(const koopa_raw_program_t &program)
     Visit(program.funcs);
 }
 
-struct instrution_name
-{
+struct instrution_name {
     std::string name;
     bool has;
 } iname;
 
 // 访问 raw slice
-void Visit(const koopa_raw_slice_t &slice)
-{
-    for (size_t i = 0; i < slice.len; ++i)
-    {
+void Visit(const koopa_raw_slice_t &slice) {
+    for (size_t i = 0; i < slice.len; ++i) {
         auto ptr = slice.buffer[i];
         // 根据 slice 的 kind 决定将 ptr 视作何种元素
-        switch (slice.kind)
-        {
+        switch (slice.kind) {
         case KOOPA_RSIK_FUNCTION:
             // 访问函数
             Visit(reinterpret_cast<koopa_raw_function_t>(ptr));
@@ -74,18 +69,15 @@ void Visit(const koopa_raw_slice_t &slice)
         }
     }
 }
-auto func_prologue()
-{
+auto func_prologue() {
     std::string epilogue;
     size_t sp = sp_allocer.var_num();
     TextLine("addi sp, sp, ", -(long long)sp * 4);
     auto it = sp_allocer.begin();
-    while (it != sp_allocer.end())
-    {
+    while (it != sp_allocer.end()) {
         auto arg = it->first + ", " + sp_allocer.sp_address(it->first);
         TextLine("lw ", arg);
-        if (it->first != "a0")
-        {
+        if (it->first != "a0") {
             epilogue += "    sw " + arg + "\n";
         }
         ++it;
@@ -94,8 +86,7 @@ auto func_prologue()
     return epilogue;
 }
 // 访问函数
-void Visit(const koopa_raw_function_t &func)
-{
+void Visit(const koopa_raw_function_t &func) {
     Line(".global ", func->name + 1);
     // prologue
     Line(func->name + 1, ":");
@@ -115,26 +106,23 @@ void Visit(const koopa_raw_function_t &func)
 }
 
 // 访问基本块
-void Visit(const koopa_raw_basic_block_t &bb)
-{
-    if (vis[bb->name]) return;
+void Visit(const koopa_raw_basic_block_t &bb) {
+    if (vis[bb->name])
+        return;
     vis[bb->name] = 1;
     // 访问所有指令
     Visit(bb->insts);
 }
 
 // 访问指令
-void Visit(const koopa_raw_value_t &value)
-{
+void Visit(const koopa_raw_value_t &value) {
     // 根据指令类型判断后续需要如何访问
     const auto &kind = value->kind;
     iname.has = value->name;
-    if (value->name)
-    {
+    if (value->name) {
         iname.name = std::string(value->name);
     }
-    switch (kind.tag)
-    {
+    switch (kind.tag) {
     case KOOPA_RVT_RETURN:
         // 访问 return 指令
         Visit(kind.data.ret);
@@ -190,13 +178,9 @@ void Visit(const koopa_raw_return_t &ret) {
     TextLine("j ", cur_func_end);
 }
 
-void Visit(const koopa_raw_integer_t &integer)
-{
-    Out(integer.value);
-}
+void Visit(const koopa_raw_integer_t &integer) { Out(integer.value); }
 
-void Visit(const koopa_raw_binary_t &binary)
-{
+void Visit(const koopa_raw_binary_t &binary) {
     auto op = binary.op;
     auto l = binary.lhs;
     auto r = binary.rhs;
@@ -205,8 +189,7 @@ void Visit(const koopa_raw_binary_t &binary)
     std::string dest = t_reg.apply();
     std::string destAdr = sp_allocer.sp_address(iname.name);
     TextLine("lw ", dest, ", ", destAdr);
-    switch (op)
-    {
+    switch (op) {
     case KOOPA_RBO_ADD:
         BinaryOut("add", dest, lhs, rhs);
         break;
@@ -268,8 +251,7 @@ void Visit(const koopa_raw_binary_t &binary)
     TextLine("sw ", dest, ", ", destAdr);
 }
 
-void Visit(const koopa_raw_load_t &load)
-{
+void Visit(const koopa_raw_load_t &load) {
     // %0 = load @x
 
     // the address of @x on stack
@@ -285,21 +267,19 @@ void Visit(const koopa_raw_load_t &load)
     // restore %0 to stack
     TextLine("sw ", value, ", ", dest);
 }
-void Visit(const koopa_raw_store_t &store)
-{
+void Visit(const koopa_raw_store_t &store) {
     // store %1, @x
 
     // get the value of %1 on stack
     auto src = phare_arg(store.value);
 
     // get the address of @x
-    auto dest= sp_allocer.sp_address(store.dest->name);
+    auto dest = sp_allocer.sp_address(store.dest->name);
 
     // @x = %1
     TextLine("sw ", src, ", ", dest);
 }
-void Visit(const koopa_raw_global_alloc_t &alloc)
-{
+void Visit(const koopa_raw_global_alloc_t &alloc) {
     // do nothing, the variable has been allocated
 }
 void Visit(const koopa_raw_branch_t &branch) {
@@ -323,7 +303,8 @@ void Visit(const koopa_raw_branch_t &branch) {
 }
 void Visit(const koopa_raw_jump_t &jump) {
     TextLine("j ", jump.target->name + 1);
-    if (vis[jump.target->name]) return;
+    if (vis[jump.target->name])
+        return;
     vis[jump.target->name] = 1;
     Line("");
     LabelOut(jump.target->name + 1);

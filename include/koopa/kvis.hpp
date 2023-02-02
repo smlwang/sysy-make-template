@@ -32,8 +32,8 @@ void Visit(const koopa_raw_return_t &);
 TempRegister t_reg;
 FuncMemManager sp_allocer;
 std::map<std::string, bool> vis;
+std::map<std::string, bool> glob_var;
 std::string cur_func_end;
-
 static bool has_return;
 void Visit(const koopa_raw_program_t &program) {
     // 访问所有全局变量
@@ -153,8 +153,6 @@ void Visit(const koopa_raw_value_t &value) {
         Line("");
         break;
     case KOOPA_RVT_ALLOC:
-        Visit(kind.data.global_alloc);
-        Line("");
         break;
     case KOOPA_RVT_LOAD:
         Visit(kind.data.load);
@@ -276,6 +274,16 @@ void Visit(const koopa_raw_binary_t &binary) {
 void Visit(const koopa_raw_load_t &load) {
     // %0 = load @x
 
+    // address of %0 on stack
+    auto dest = sp_allocer.sp_address(iname.name);
+
+    if (glob_var.count(load.src->name)) {
+        auto src = t_reg.apply();
+        TextLine("la ", src, ", ", load.src->name + 1);
+        TextLine("lw ", src, ", 0(", src, ")");
+        TextLine("sw ", src, ", ", dest);
+        return;
+    }
     // the address of @x on stack
     auto src = sp_allocer.sp_address(load.src->name);
 
@@ -284,17 +292,21 @@ void Visit(const koopa_raw_load_t &load) {
     // %0 = *@x
     TextLine("lw ", value, ", ", src);
 
-    // address of %0 on stack
-    auto dest = sp_allocer.sp_address(iname.name);
     // restore %0 to stack
     TextLine("sw ", value, ", ", dest);
 }
 
 void Visit(const koopa_raw_store_t &store) {
     // store %1, @x
-
     // get the value of %1 on stack
     auto src = phare_arg(store.value);
+
+    if (glob_var.count(store.dest->name)) {
+        auto dest = t_reg.apply();
+        TextLine("la ", dest, ", ", store.dest->name + 1);
+        TextLine("sw ", src, ", 0(", dest, ")");
+        return;
+    }
 
     // get the address of @x
     auto dest = sp_allocer.sp_address(store.dest->name);
@@ -303,7 +315,11 @@ void Visit(const koopa_raw_store_t &store) {
     TextLine("sw ", src, ", ", dest);
 }
 void Visit(const koopa_raw_global_alloc_t &alloc) {
-    // do nothing, the variable has been allocated
+    TextLine(".data");
+    TextLine(".globl ", iname.name.substr(1));
+    LabelOut(iname.name.substr(1));
+    glob_var[iname.name] = 1;
+    TextLine(".word ", alloc.init->kind.data.integer.value);
 }
 void Visit(const koopa_raw_branch_t &branch) {
     auto cond = phare_arg(branch.cond);
